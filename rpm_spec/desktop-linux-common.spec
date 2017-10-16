@@ -14,15 +14,26 @@ URL:		http://www.qubes-os.org
 
 BuildArch:	noarch
 BuildRequires:	pandoc
+%if 0%{?rhel} >= 7
+BuildRequires:	python34
+BuildRequires:	python34-devel
+%else
 BuildRequires:	python3
 BuildRequires:	python3-devel
+%endif
 BuildRequires:	ImageMagick
 BuildRequires: desktop-file-utils >= %{desktop_file_utils_version}
 Requires:	xdotool
 Requires:	xorg-x11-utils
+%if 0%{?rhel} >= 7
+Requires:	python34-qubesimgconverter
+Requires:	python34-qubesadmin
+Requires:	python34-pyxdg
+%else
 Requires:	python3-qubesimgconverter
 Requires:	python3-qubesadmin
 Requires:	python3-pyxdg
+%endif
 Requires:   qubes-manager
 
 %define _builddir %(pwd)
@@ -84,7 +95,7 @@ fi
 %files
 %defattr(-,root,root,-)
 %{_bindir}/qvm-xkill
-%{_mandir}/man1/{qubes,qvm}-*.1*
+%{_mandir}/man1/qvm-*.1*
 %dir %{python3_sitelib}/qubesdesktop-*.egg-info
 %{python3_sitelib}/qubesdesktop-*.egg-info/*
 %dir %{python3_sitelib}/qubesappmenus
