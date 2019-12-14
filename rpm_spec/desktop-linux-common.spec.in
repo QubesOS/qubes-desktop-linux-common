@@ -69,6 +69,23 @@ xdg-icon-resource forceupdate
 
 #xdg-desktop-menu install /usr/share/qubes-appmenus/qubes-dispvm.directory /usr/share/qubes-appmenus/qubes-dispvm-*.desktop
 
+local_user=`getent group qubes | cut -d : -f 4 | cut -d , -f 1`
+if [ -n "$local_user" ]; then
+    call_as_user() {
+        su -c "$*" - $local_user
+    }
+else
+    # This will be the case during installation - user will be created in
+    # firstboot. There is also a code to fix file permissions, so not a big problem
+    call_as_user() {
+        $*
+    }
+fi
+
+for vm in $(qvm-ls --raw-list); do
+    call_as_user qvm-appmenus --update $vm
+done
+
 %preun
 if [ "$1" = 0 ] ; then
     # no more packages left
@@ -98,6 +115,7 @@ fi
 %{python3_sitelib}/qubesappmenus/qubes-vm.directory.template
 %{python3_sitelib}/qubesappmenus/qubes-dispvm.directory.template
 %{python3_sitelib}/qubesappmenus/qubes-start.desktop.template
+%{python3_sitelib}/qubesappmenus/qubes-vm-directory-settings.menu.template
 %{python3_sitelib}/qubesappmenus/tests.py
 %{python3_sitelib}/qubesappmenus/tests_integ.py
 %{python3_sitelib}/qubesappmenus/test-data

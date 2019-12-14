@@ -41,6 +41,8 @@ import qubesadmin.vm
 import qubesimgconverter
 
 basedir = os.path.join(xdg.BaseDirectory.xdg_data_home, 'qubes-appmenus')
+menus_dir = os.path.join(xdg.BaseDirectory.xdg_config_home,
+                         'menus', 'applications-merged')
 
 
 class DispvmNotSupportedError(qubesadmin.exc.QubesException):
@@ -328,6 +330,21 @@ class Appmenus(object):
                 desktop_menu_env = os.environ.copy()
                 desktop_menu_env['LC_COLLATE'] = 'C'
                 subprocess.check_call(desktop_menu_cmd, env=desktop_menu_env)
+
+                # this file makes sure the VM menu has Settings and/or Start on
+                # top, separated from inside-vm apps with a separator
+                self.write_desktop_file(
+                        vm,
+                        pkg_resources.resource_string(
+                            __name__,
+                            'qubes-vm-directory-settings.menu.template'
+                        ).decode(),
+                        os.path.join(
+                            menus_dir, '-'.join((
+                                'user',
+                                vm.name,
+                                'qubes-vm-directory-settings.menu'))))
+
             except subprocess.CalledProcessError:
                 vm.log.warning("Problem creating appmenus for %s", vm.name)
 

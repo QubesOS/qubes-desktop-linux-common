@@ -1,0 +1,19 @@
+<!DOCTYPE Menu PUBLIC "-//freedesktop//DTD Menu 1.0//EN"
+    "http://www.freedesktop.org/standards/menu-spec/menu-1.0.dtd">
+<Menu>
+    <Name>Applications</Name>
+<Menu>
+    <Name>%VMNAME%-vm</Name>
+    <Directory>%VMNAME%-vm.directory</Directory>
+    <Include>
+        <Filename>%VMNAME%-qubes-vm-settings.desktop</Filename>
+        <Filename>%VMNAME%-qubes-start.desktop</Filename>
+    </Include>
+    <Layout>
+        <Filename>%VMNAME%-qubes-vm-settings.desktop</Filename>
+        <Filename>%VMNAME%-qubes-start.desktop</Filename>
+        <Separator />
+        <Merge type="all"/>
+    </Layout>
+</Menu>
+</Menu>
