@@ -10,10 +10,10 @@
         <Filename>%VMNAME%-qubes-start.desktop</Filename>
     </Include>
     <Layout>
+        <Merge type="all"/>
+        <Separator />
         <Filename>%VMNAME%-qubes-vm-settings.desktop</Filename>
         <Filename>%VMNAME%-qubes-start.desktop</Filename>
-        <Separator />
-        <Merge type="all"/>
     </Layout>
 </Menu>
 </Menu>
