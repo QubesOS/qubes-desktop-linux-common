@@ -122,14 +122,6 @@ def sanitise_categories(untrusted_value):
     return ';'.join(categories) + ';'
 
 
-def fallback_hvm_appmenulist():
-    '''List default menu entries to be created for HVM'''
-    p = subprocess.Popen(["grep", "-rH", "=", "/usr/share/qubes-appmenus/hvm"],
-                         stdout=subprocess.PIPE)
-    (stdout, _) = p.communicate()
-    return stdout.decode().splitlines()
-
-
 def get_appmenus(vm):
     '''Get appmenus from a *vm*. *vm* can be :py:obj:None to retrieve data
     from stdin - should be a `qubes.GetAppmenus` service in the VM connected
@@ -161,11 +153,8 @@ def get_appmenus(vm):
         p.wait()
         p.stdout.close()
         if p.returncode != 0:
-            if vm.virt_mode == 'hvm':
-                untrusted_appmenulist = fallback_hvm_appmenulist()
-            else:
-                raise qubesadmin.exc.QubesException(
-                    "Error getting application list")
+            raise qubesadmin.exc.QubesException(
+                "Error getting application list")
         if appmenus_line_limit_left == 0:
             raise qubesadmin.exc.QubesException("Line count limit exceeded")
 

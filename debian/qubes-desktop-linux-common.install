@@ -2,9 +2,6 @@ usr/bin/qvm-appmenus
 usr/bin/qvm-xkill
 usr/bin/qvm-sync-appmenus
 usr/share/qubes/icons/*.png
-usr/share/qubes-appmenus/hvm/internet-explorer.desktop
-usr/share/qubes-appmenus/hvm/cmd.desktop
-usr/share/qubes-appmenus/hvm/explorer.desktop
 usr/lib/python3/dist-packages/qubesappmenus/*
 usr/lib/python3/dist-packages/qubesdesktop-*.egg-info/*
 usr/lib/python3/dist-packages/qubesappmenusext/*

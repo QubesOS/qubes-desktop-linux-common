@@ -18,9 +18,6 @@ install:
 	mkdir -p $(DESTDIR)/etc/qubes-rpc/policy
 	install -m 0755 qubesappmenus/qubes.SyncAppMenus $(DESTDIR)/etc/qubes-rpc/
 
-	mkdir -p $(DESTDIR)/usr/share/qubes-appmenus/
-	cp -r appmenus-files/* $(DESTDIR)/usr/share/qubes-appmenus/
-
 	$(MAKE) -C qubes-menus install
 
 clean:
