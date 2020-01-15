@@ -23,11 +23,9 @@
 
 '''Retrieve menu entries from a VM and convert to appmenu templates'''
 
-import subprocess
 import re
 import os
 import sys
-import shutil
 import pipes
 import pkg_resources
 
