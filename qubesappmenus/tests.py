@@ -66,10 +66,11 @@ class TestVM(object):
     # pylint: disable=too-few-public-methods
     app = TestApp()
 
-    def __init__(self, name, **kwargs):
+    def __init__(self, name, klass, **kwargs):
         self.running = False
         self.is_template = False
         self.name = name
+        self.klass = klass
         self.log = logging.getLogger('qubesappmenus.tests')
         self.features = TestFeatures(self)
         for k, v in kwargs.items():
@@ -90,16 +91,19 @@ class TC_00_Appmenus(unittest.TestCase):
         vmname = VMPREFIX + 'standalone'
         self.standalone = TestVM(
             name=vmname,
+            klass='StandaloneVM',
             updateable=True,
         )
         vmname = VMPREFIX + 'template'
         self.template = TestVM(
             name=vmname,
+            klass='TemplateVM',
             updateable=True,
         )
         vmname = VMPREFIX + 'vm'
         self.appvm = TestVM(
             name=vmname,
+            klass='AppVM',
             template=self.template,
             updateable=False,
         )
@@ -298,7 +302,7 @@ class TC_00_Appmenus(unittest.TestCase):
             p.wait = lambda: None
             p.returncode = 0
             return p
-        vm = TestVM('test-vm', run_service=_run)
+        vm = TestVM('test-vm', klass='TemplateVM', run_service=_run)
         appmenus = qubesappmenus.receive.get_appmenus(vm)
         expected_appmenus = {
             'org.gnome.Nautilus': {

@@ -293,12 +293,18 @@ def process_appmenus_templates(appmenusext, vm, appmenus):
     if not os.path.exists(template_icons_dir):
         os.makedirs(template_icons_dir)
 
-    qubes_start_fname = os.path.join(templates_dir, 'qubes-start.desktop')
-    if not os.path.exists(qubes_start_fname):
-        with open(qubes_start_fname, 'wb') as f:
-            f.write(pkg_resources.resource_string(
-                __name__,
-                'qubes-start.desktop.template'))
+    # Only create Start shortcut for standalone VMs. Otherwise we will use the
+    # one from template VM.
+    has_qubes_start = vm.klass != 'AppVM'
+
+    if has_qubes_start:
+        qubes_start_fname = os.path.join(templates_dir, 'qubes-start.desktop')
+        if not os.path.exists(qubes_start_fname):
+            with open(qubes_start_fname, 'wb') as qubes_start_f:
+                vm.log.info("Creating Start")
+                qubes_start_f.write(pkg_resources.resource_string(
+                    __name__,
+                    'qubes-start.desktop.template'))
 
     for appmenu_name in appmenus.keys():
         appmenu_path = os.path.join(
@@ -341,6 +347,10 @@ def process_appmenus_templates(appmenusext, vm, appmenus):
     # Delete appmenus of removed applications
     for appmenu_file in os.listdir(templates_dir):
         if not appmenu_file.endswith('.desktop'):
+            continue
+
+        # Keep the Start shortcut
+        if has_qubes_start and appmenu_file == 'qubes-start.desktop':
             continue
 
         if appmenu_file[:-len('.desktop')] not in appmenus:
