@@ -29,6 +29,7 @@ import os
 import sys
 import shutil
 import pipes
+import pkg_resources
 
 import qubesadmin.exc
 import qubesadmin.tools
@@ -303,14 +304,12 @@ def process_appmenus_templates(appmenusext, vm, appmenus):
     if not os.path.exists(template_icons_dir):
         os.makedirs(template_icons_dir)
 
-    if vm.virt_mode == 'hvm':
-        if not os.path.exists(os.path.join(
-                templates_dir,
-                os.path.basename(
-                    qubesappmenus.AppmenusPaths.appmenu_start_hvm_template))):
-            shutil.copy(qubesappmenus.AppmenusPaths.appmenu_start_hvm_template,
-                templates_dir)
-
+    qubes_start_fname = os.path.join(templates_dir, 'qubes-start.desktop')
+    if not os.path.exists(qubes_start_fname):
+        with open(qubes_start_fname, 'wb') as f:
+            f.write(pkg_resources.resource_string(
+                __name__,
+                'qubes-start.desktop.template'))
 
     for appmenu_name in appmenus.keys():
         appmenu_path = os.path.join(

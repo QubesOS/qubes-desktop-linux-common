@@ -63,13 +63,6 @@ class AppmenusSubdirs:
     whitelist = 'whitelisted-appmenus.list'
 
 
-class AppmenusPaths:
-    '''Predefined menu entries'''
-    # pylint: disable=too-few-public-methods
-    appmenu_start_hvm_template = \
-        '/usr/share/qubes-appmenus/qubes-start.desktop'
-
-
 class Appmenus(object):
     '''Main class for menu entries handling'''
     def templates_dirs(self, vm):
