@@ -17,12 +17,14 @@
 #
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, see <http://www.gnu.org/licenses/>.
+import grp
 import os
 
 import asyncio
 import xdg
 import xdg.DesktopEntry
 import unittest
+import unittest.mock
 
 import qubes
 import qubes.tests
@@ -40,7 +42,26 @@ class TC_10_AppmenusIntegration(qubes.tests.extra.ExtraTestCase):
     def setUp(self):
         super(TC_10_AppmenusIntegration, self).setUp()
         self.vm = self.create_vms(['vm'])[0]
+        # when tests are running as root, patch basedir to point at
+        # normal user's home
+        if os.getuid() == 0:
+            user = grp.getgrnam('qubes').gr_mem[0]
+            basedir = os.path.expanduser(
+                '~{}/.local/share/qubes-appmenus'.format(user))
+            self.basedir_patch = unittest.mock.patch('qubesappmenus.basedir',
+                basedir)
+            self.basedir_patch.start()
+            self.xdg_data_home = os.path.expanduser(
+                '~{}/.local/share'.format(user))
+        else:
+            self.basedir_patch = None
+            self.xdg_data_home = xdg.BaseDirectory.xdg_data_home
         self.appmenus = qubesappmenus.Appmenus()
+
+    def tearDown(self):
+        if self.basedir_patch is not None:
+            self.basedir_patch.stop()
+        super(TC_10_AppmenusIntegration, self).tearDown()
 
     def assertPathExists(self, path):
         if not os.path.exists(path):
@@ -95,7 +116,7 @@ class TC_10_AppmenusIntegration(qubes.tests.extra.ExtraTestCase):
             else:
                 subdir = 'applications'
             self.assertPathExists(os.path.join(
-                xdg.BaseDirectory.xdg_data_home, subdir,
+                self.xdg_data_home, subdir,
                 '-'.join([self.vm.name, appmenu])))
         # TODO: some KDE specific dir?
 
@@ -113,7 +134,7 @@ class TC_10_AppmenusIntegration(qubes.tests.extra.ExtraTestCase):
             else:
                 subdir = 'applications'
             self.assertPathNotExists(os.path.join(
-                xdg.BaseDirectory.xdg_data_home, subdir,
+                self.xdg_data_home, subdir,
                 '-'.join([self.vm.name, appmenu])))
 
     def test_003_created_template_empty(self):
