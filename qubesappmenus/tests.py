@@ -439,7 +439,7 @@ class TC_00_Appmenus(unittest.TestCase):
                 f.read()
             )
 
-        mock_subprocess.assert_called_once()
+        self.assertEquals(len(mock_subprocess.mock_calls), 1)
         args = mock_subprocess.call_args[0][0]
         self.assertEqual(
             args[:3],
@@ -488,7 +488,7 @@ class TC_00_Appmenus(unittest.TestCase):
                 f.read()
             )
 
-        mock_subprocess.assert_called_once()
+        self.assertEquals(len(mock_subprocess.mock_calls), 1)
         args = mock_subprocess.call_args[0][0]
         self.assertEqual(
             args[:3],
