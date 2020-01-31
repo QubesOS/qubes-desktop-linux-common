@@ -1,3 +1,22 @@
+qubes-desktop-linux-common (4.0.20-1) unstable; urgency=medium
+
+  [ Frédéric Pierret (fepitre) ]
+  * travis: switch to bionic
+
+  [ Pawel Marczewski ]
+  * Properly create "Start" shortcut
+  * Remove fallback shortcuts for HVM machines
+  * appmenus test: don't depend on file order
+  * Ensure a Start shortcut for all machines
+
+  [ Marek Marczykowski-Górecki ]
+  * tests: adjust for Python 3.5
+
+  [ Pawel Marczewski ]
+  * Remove unused imports
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Fri, 31 Jan 2020 17:40:46 +0100
+
 qubes-desktop-linux-common (4.0.19-1) unstable; urgency=medium
 
   [ Marta Marczykowska-Górecka ]
