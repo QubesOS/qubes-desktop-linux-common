@@ -2,7 +2,7 @@
 if [ $(id -u) -eq 0 ]; then
     user=$(getent group qubes|cut -d: -f4|cut -d, -f1)
     if [ -n "$user" ]; then
-        exec /usr/sbin/runuser "$user" env DISPLAY=:0 /usr/bin/qvm-sync-appmenus
+        exec /usr/sbin/runuser -u "$user" env DISPLAY=:0 /usr/bin/qvm-sync-appmenus
     fi
 else
     /usr/bin/qvm-sync-appmenus
