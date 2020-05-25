@@ -22,6 +22,7 @@
 
 '''Handle menu entries for starting applications in qubes'''
 
+import contextlib
 import subprocess
 import sys
 import os
@@ -249,13 +250,21 @@ class Appmenus(object):
 
         for appmenu in appmenus:
             appmenu_basename = os.path.basename(appmenu)
-            if self.write_desktop_file(vm,
-                    appmenu,
-                    os.path.join(appmenus_dir,
-                        '-'.join((vm.name, appmenu_basename))),
-                    dispvm):
-                changed_appmenus.append(appmenu_basename)
-        if self.write_desktop_file(vm,
+            try:
+                if self.write_desktop_file(
+                        vm,
+                        appmenu,
+                        os.path.join(appmenus_dir,
+                                     '-'.join((vm.name, appmenu_basename))),
+                        dispvm):
+                    changed_appmenus.append(appmenu_basename)
+            except DispvmNotSupportedError:
+                # remove DispVM-incompatible entries
+                with contextlib.suppress(FileNotFoundError):
+                    os.unlink(os.path.join(
+                        appmenus_dir, '-'.join((vm.name, appmenu_basename))))
+        if self.write_desktop_file(
+                vm,
                 pkg_resources.resource_string(
                     __name__, 'qubes-vm-settings.desktop.template'
                 ).decode(),
