@@ -159,7 +159,7 @@ def get_appmenus(vm):
     appmenus = {}
     line_rx = re.compile(
         r"([a-zA-Z0-9._-]+?)(?:\.desktop)?:"
-        r"([a-zA-Z0-9-]+(?:\[[a-zA-Z@_]+\])?)=(.*)")
+        r"([a-zA-Z0-9-]+(?:\[[a-zA-Z@_]+\])?)\s*=\s*(.*)")
     ignore_rx = re.compile(r".*([a-zA-Z0-9._-]+.desktop):(#.*|\s*)$")
     for untrusted_line in untrusted_appmenulist:
         # Ignore blank lines and comments
@@ -177,7 +177,7 @@ def get_appmenus(vm):
             assert '\x1b' not in untrusted_key
             assert '=' not in untrusted_key
 
-            untrusted_value = untrusted_m.group(3)
+            untrusted_value = untrusted_m.group(3).strip()
             # TODO add key-dependent asserts
 
             # Look only at predefined keys
