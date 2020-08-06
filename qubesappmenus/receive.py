@@ -48,6 +48,11 @@ parser.add_argument('--regenerate-only',
     help='Only regenerate appmenus entries, do not synchronize with system '
          'in template')
 
+parser.add_argument(
+    '--force-root', action='store',
+    help='Use to force the tool to be run as root. Not recommended.'
+)
+
 # TODO offline mode
 
 # fields required to be present (and verified) in retrieved desktop file
@@ -380,6 +385,11 @@ def main(args=None):
     env_vmname = os.environ.get("QREXEC_REMOTE_DOMAIN")
 
     args = parser.parse_args(args)
+
+    if os.getuid() == 0 and not args.force_root:
+        parser.error('This tool should not be executed as root. If you are '
+                     'absolutely sure you know what you are doing, '
+                     'use --force-root')
 
     if env_vmname:
         vm = args.app.domains[env_vmname]
