@@ -48,10 +48,11 @@ parser.add_argument('--regenerate-only',
     help='Only regenerate appmenus entries, do not synchronize with system '
          'in template')
 
-parser.add_argument(
-    '--force-root', action='store',
-    help='Use to force the tool to be run as root. Not recommended.'
-)
+# qubesadmin.tools.QubesArgumentParser already adds it (but with supressed help)
+#parser.add_argument(
+#    '--force-root', action='store',
+#    help='Use to force the tool to be run as root. Not recommended.'
+#)
 
 # TODO offline mode
 
