@@ -28,12 +28,11 @@ import os
 import sys
 import pipes
 import pkg_resources
+import qubesimgconverter
 
 import qubesadmin.exc
 import qubesadmin.tools
 import qubesappmenus
-
-import qubesimgconverter
 
 parser = qubesadmin.tools.QubesArgumentParser(
     vmname_nargs='?',
