@@ -1,3 +1,25 @@
+qubes-desktop-linux-common (4.0.21-1) unstable; urgency=medium
+
+  [ Marek Marczykowski-Górecki ]
+  * tests: fix them when called as root
+  * Fix qubes.SyncAppMenus service
+  * appmenu: skip/remove DispVM-incompatible entries instead of failing
+
+  [ Marta Marczykowska-Górecka ]
+  * Fixed handling of spaces in qvm-sync-appmenus
+  * Warn user against running qvm-sync-appmenus as root
+
+  [ Marek Marczykowski-Górecki ]
+  * Fix conflicting --force-root argument
+
+  [ Marta Marczykowska-Górecka ]
+  * Changed "Start" .desktop entry to "Start qube" for more clarity
+
+  [ Marek Marczykowski-Górecki ]
+  * Fix pylin super-with-arguments, fix DispvmNotSupportedError message
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Sun, 25 Oct 2020 05:53:25 +0100
+
 qubes-desktop-linux-common (4.0.20-1) unstable; urgency=medium
 
   [ Frédéric Pierret (fepitre) ]
