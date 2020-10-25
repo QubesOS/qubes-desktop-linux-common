@@ -50,7 +50,7 @@ class DispvmNotSupportedError(qubesadmin.exc.QubesException):
         if msg is None:
             msg = 'Creating Disposable VM menu entries ' \
                   'not supported by this template'
-            super(DispvmNotSupportedError, self).__init__(msg)
+        super().__init__(msg)
 
 
 class AppmenusSubdirs:
