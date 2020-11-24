@@ -7,7 +7,7 @@ include:
 checks:tests:
   stage: checks
   before_script:
-    - sudo dnf install -y python3-pip
+    - sudo dnf install -y python3-pip xdg-utils ImageMagick
     - pip3 install --quiet -r ci/requirements.txt
     - git clone https://github.com/QubesOS/qubes-linux-utils ~/linux-utils
     - git clone https://github.com/QubesOS/qubes-core-admin-client ~/core-admin-client
