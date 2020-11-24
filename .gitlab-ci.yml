@@ -3,3 +3,18 @@ include:
     file: '/r4.0/gitlab-base.yml'
   - project: 'QubesOS/qubes-continuous-integration'
     file: '/r4.0/gitlab-dom0.yml'
+
+checks:tests:
+  stage: checks
+  before_script:
+    - sudo dnf install -y python3-pip
+    - pip3 install --quiet -r ci/requirements.txt
+    - git clone https://github.com/QubesOS/qubes-linux-utils ~/linux-utils
+    - git clone https://github.com/QubesOS/qubes-core-admin-client ~/core-admin-client
+  script:
+    - "export PYTHONPATH=~/core-admin-client:~/linux-utils/imgconverter"
+    - python3 -m pylint qubesappmenus
+    - python3 -m coverage run -m unittest -v qubesappmenus.tests
+  after_script:
+    - "PATH=$PATH:$HOME/.local/bin"
+    - codecov -F unittests
