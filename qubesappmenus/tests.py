@@ -514,6 +514,7 @@ class TC_00_Appmenus(unittest.TestCase):
         self.appvm.virt_mode = 'pvh'
         self.appvm.run_service = _run
         self.appvm.log = unittest.mock.Mock()
+        self.appvm.log.warning = print
         appmenus = {
             'org.gnome.Cheese': {
                 'Name': 'Cheese',
