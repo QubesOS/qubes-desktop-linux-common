@@ -1,5 +1,7 @@
+PYTHON ?= python3
+
 all:
-	python3 setup.py build
+	$(PYTHON) setup.py build
 
 
 install:
@@ -13,7 +15,7 @@ install:
 	done
 	### Appmenus
 	# force /usr/bin before /bin to have /usr/bin/python instead of /bin/python
-	PATH="/usr/bin:$$PATH" python3 setup.py install $(PYTHON_PREFIX_ARG) -O1 --skip-build --root $(DESTDIR)
+	PATH="/usr/bin:$$PATH" $(PYTHON) setup.py install $(PYTHON_PREFIX_ARG) -O1 --skip-build --root $(DESTDIR)
 
 	mkdir -p $(DESTDIR)/etc/qubes-rpc/policy
 	install -m 0755 qubesappmenus/qubes.SyncAppMenus $(DESTDIR)/etc/qubes-rpc/

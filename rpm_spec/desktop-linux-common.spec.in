@@ -53,12 +53,12 @@ of "subdirectories" in the menus.
 %setup -q
 
 %build
-make
-make -C doc manpages
+make PYTHON=%{__python3}
+make -C doc manpages PYTHON=%{__python3}
 
 %install
-make DESTDIR=$RPM_BUILD_ROOT MANDIR=%{_mandir} install
-make -C doc DESTDIR=$RPM_BUILD_ROOT MANDIR=%{_mandir} install
+make DESTDIR=$RPM_BUILD_ROOT MANDIR=%{_mandir} PYTHON=%{__python3} install
+make -C doc DESTDIR=$RPM_BUILD_ROOT MANDIR=%{_mandir} PYTHON=%{__python3} install
 
 %post
 
