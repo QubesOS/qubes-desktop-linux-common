@@ -12,6 +12,7 @@ URL:		http://www.qubes-os.org
 Source0:	%{name}-%{version}.tar.gz
 
 BuildArch:	noarch
+BuildRequires:	make
 BuildRequires:	pandoc
 BuildRequires:	python%{python3_pkgversion}
 BuildRequires:	python%{python3_pkgversion}-devel
