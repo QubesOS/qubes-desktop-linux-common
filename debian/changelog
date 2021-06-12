@@ -1,3 +1,25 @@
+qubes-desktop-linux-common (4.0.22-1) unstable; urgency=medium
+
+  [ Frédéric Pierret (fepitre) ]
+  * Add .gitlab-ci.yml
+
+  [ Marek Marczykowski-Górecki ]
+  * gitlab-ci: include tests job
+  * ci: add missing dependencies
+  * tests: print warnings during tests
+
+  [ Roberto Romero ]
+  * Accept "+" as part of the Name, GenericName, and Comment
+
+  [ Frédéric Pierret (fepitre) ]
+  * Fix build with python3 for CentOS
+  * spec: add BR make
+
+  [ Marek Marczykowski-Górecki ]
+  * Make pylint happy
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Sat, 12 Jun 2021 22:52:58 +0200
+
 qubes-desktop-linux-common (4.0.21-1) unstable; urgency=medium
 
   [ Marek Marczykowski-Górecki ]
