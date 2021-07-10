@@ -1,3 +1,27 @@
+qubes-desktop-linux-common (4.1.8-1) unstable; urgency=medium
+
+  [ Demi Marie Obenour ]
+  * Ignore appmenus-dispvm unless template_for_dispvms=True
+  * Only allow DispVM templates to have appmenus-dispvm feature
+
+  [ Frédéric Pierret (fepitre) ]
+  * appmenus: few refactors
+  * qubesappmenus: add --all option on actions
+  * qubesappmenus: ensure to support --all for remove
+
+  [ Demi Marie Obenour ]
+  * Switch appmenu delimiter from hyphen to full stop
+  * Update integration test
+
+  [ Marek Marczykowski-Górecki ]
+  * Revert "Only allow DispVM templates to have appmenus-dispvm feature"
+  * Move constants to the top
+  * Add separate submenu for launching apps in DisposableVM
+  * Rename "Domain:" to "Qube:" menu
+  * tests: remove extra print
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Sat, 10 Jul 2021 04:44:43 +0200
+
 qubes-desktop-linux-common (4.1.7-1) unstable; urgency=medium
 
   [ Frédéric Pierret (fepitre) ]
