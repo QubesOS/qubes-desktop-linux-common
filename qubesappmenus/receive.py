@@ -235,6 +235,7 @@ def create_template(path, name, values, legacy):
     desktop_entry += "Type=Application\n"
     desktop_entry += "Terminal=false\n"
     desktop_entry += "X-Qubes-VmName=%VMNAME%\n"
+    desktop_entry += "X-Qubes-AppName=" + name + "\n"
 
     if 'Icon' in values:
         icon_file = os.path.splitext(os.path.split(path)[1])[0] + '.png'

@@ -3,6 +3,7 @@ Version=1.0
 Type=Application
 Terminal=false
 X-Qubes-VmName=test-inst-app
+X-Qubes-AppName=evince
 Icon=%BASEDIR%/test-inst-app/apps.icons/evince.png
 Name=test-inst-app: Document Viewer
 Comment=View multi-page documents
