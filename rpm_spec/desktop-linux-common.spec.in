@@ -20,7 +20,7 @@ BuildRequires:	python%{python3_pkgversion}-setuptools
 BuildRequires:	ImageMagick
 BuildRequires: desktop-file-utils >= %{desktop_file_utils_version}
 Requires:	xdotool
-Requires:	xorg-x11-utils
+Requires:	xprop
 Requires:	python%{python3_pkgversion}-qubesimgconverter
 Requires:	python%{python3_pkgversion}-qubesadmin
 Requires:	python%{python3_pkgversion}-pyxdg
