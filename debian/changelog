@@ -1,3 +1,10 @@
+qubes-desktop-linux-common (4.1.9-1) unstable; urgency=medium
+
+  * Include application id in the desktop file - X-Qubes-AppName
+  * rpm: replace xorg-x11-utils dependency with just xprop
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Thu, 19 Aug 2021 15:42:59 +0200
+
 qubes-desktop-linux-common (4.1.8-1) unstable; urgency=medium
 
   [ Demi Marie Obenour ]
