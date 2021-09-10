@@ -19,7 +19,7 @@ Architecture: any
 Depends:
  python3-qubesimgconverter,
  python3-xdg,
- qubes-core-admin-client,
+ qubes-core-admin-client (>= 4.1.14),
  ${python3:Depends},
  ${misc:Depends}
 Description: Common code used for multiple desktop environments in Qubes
