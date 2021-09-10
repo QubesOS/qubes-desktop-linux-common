@@ -692,7 +692,7 @@ class Appmenus(object):
                 'kbuildsycoca' + os.environ.get('KDE_SESSION_VERSION', '4')])
 
 
-parser = qubesadmin.tools.QubesArgumentParser()
+parser = qubesadmin.tools.QubesArgumentParser(show_forceroot=True)
 
 parser_stdin_mode = parser.add_mutually_exclusive_group()
 
