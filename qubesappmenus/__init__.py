@@ -403,7 +403,8 @@ class Appmenus(object):
             appmenus_to_remove = [
                 x for x in appmenus_to_remove
                 if not x.startswith(self.qubes_vm_desktop) and
-                   not x.startswith('qubes-vm-directory-')]
+                   not x.startswith('qubes-vm-directory-') and
+                   not x.startswith(self.qubes_vm_desktop_settings)]
         self._do_remove_appmenus(vm, appmenus_to_remove, appmenus_dir,
                 refresh_cache)
 

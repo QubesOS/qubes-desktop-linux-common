@@ -343,6 +343,14 @@ class TC_00_Appmenus(unittest.TestCase):
             content = f.read()
             self.assertNotIn(b'X-Qubes-NonDispvmExec=', content)
             self.assertIn(b'X-Qubes-DispvmExec=', content)
+        settings_path = os.path.join(appmenus_dir,
+            'org.qubes-os.qubes-vm-settings.test-inst-dvm.desktop')
+        self.assertPathExists(settings_path)
+        with open(settings_path, 'rb') as f:
+            content = f.read()
+            self.assertNotIn(b'X-Qubes-NonDispvmExec=', content)
+            self.assertNotIn(b'X-Qubes-DispvmExec=', content)
+            self.assertIn(b'Exec=qubes-vm-settings', content)
 
         # "Disposable" menu
         dirfile_path = os.path.join(appmenus_dir,
