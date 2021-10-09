@@ -1,3 +1,13 @@
+qubes-desktop-linux-common (4.1.10-1) unstable; urgency=medium
+
+  * receive: use --force-root support now available again in
+    QubesArgumentParser
+  * Prevent running as root in qvm-appmenus too
+  * Bump required core-admin-client version, for --force-root support
+  * appmenus: fix creating settings entry in DispVM Template submenu
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Sat, 09 Oct 2021 04:07:22 +0200
+
 qubes-desktop-linux-common (4.1.9-1) unstable; urgency=medium
 
   * Include application id in the desktop file - X-Qubes-AppName
