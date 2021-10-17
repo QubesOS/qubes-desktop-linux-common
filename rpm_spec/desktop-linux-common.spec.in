@@ -25,6 +25,7 @@ Requires:	python%{python3_pkgversion}-qubesimgconverter
 # for --force-root support
 Requires:	python%{python3_pkgversion}-qubesadmin >= 4.1.14
 Requires:	python%{python3_pkgversion}-pyxdg
+Requires:	xdg-utils
 
 %description
 Common code used for multiple desktop environments' Qubes integration
