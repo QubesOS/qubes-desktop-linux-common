@@ -1,3 +1,10 @@
+qubes-desktop-linux-common (4.1.11-1) unstable; urgency=medium
+
+  [ Frédéric Pierret (fepitre) ]
+  * spec: add R xdg-utils
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Wed, 20 Oct 2021 01:32:25 +0200
+
 qubes-desktop-linux-common (4.1.10-1) unstable; urgency=medium
 
   * receive: use --force-root support now available again in
