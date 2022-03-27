@@ -266,10 +266,14 @@ def create_template(path, name, values, legacy):
         desktop_entry += \
             "X-Qubes-DispvmExec=qvm-run -q -a --service --dispvm=%VMNAME% " \
             "-- qubes.StartApp+{}\n".format(name)
-    if not os.path.exists(path) or desktop_entry != open(path, "r").read():
-        desktop_file = open(path, "w")
-        desktop_file.write(desktop_entry)
-        desktop_file.close()
+    try:
+        with open(path, "r") as path_f:
+            existing_desktop_entry = path_f.read()
+    except FileNotFoundError:
+        existing_desktop_entry = ''
+    if desktop_entry != existing_desktop_entry:
+        with open(path, "w") as desktop_file:
+            desktop_file.write(desktop_entry)
 
 
 def process_appmenus_templates(appmenusext, vm, appmenus):
