@@ -151,7 +151,8 @@ class Appmenus(object):
                 raise DispvmNotSupportedError()
             source = source. \
                 replace('\nExec=', '\nX-Qubes-NonDispvmExec='). \
-                replace('\nX-Qubes-DispvmExec=', '\nExec=')
+                replace('\nX-Qubes-DispvmExec=', '\nExec='). \
+                replace('\nName=%VMNAME%', '\nName=%VMNAME% (dvm)')
         if dispvm:
             # menu directory for creating new DispVMs is special
             icon = 'dispvm-' + vm.label.name
