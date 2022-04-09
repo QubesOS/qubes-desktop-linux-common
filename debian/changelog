@@ -1,3 +1,14 @@
+qubes-desktop-linux-common (4.1.12-1) unstable; urgency=medium
+
+  [ Marek Marczykowski-Górecki ]
+  * Fix open file leak
+
+  [ Aurora ]
+  * Fix the ambiguity in Application file names for programs run env
+  * Reorder (dvm) indicator for nicer menu display
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Sat, 09 Apr 2022 18:27:15 +0200
+
 qubes-desktop-linux-common (4.1.11-1) unstable; urgency=medium
 
   [ Frédéric Pierret (fepitre) ]
