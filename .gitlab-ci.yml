@@ -1,23 +1,27 @@
-include:
-  - project: 'QubesOS/qubes-continuous-integration'
-    file: '/r4.1/gitlab-base.yml'
-  - project: 'QubesOS/qubes-continuous-integration'
-    file: '/r4.1/gitlab-dom0.yml'
-  - project: 'QubesOS/qubes-continuous-integration'
-    file: '/r4.1/gitlab-vm.yml'
-
 checks:tests:
-  stage: checks
-  before_script:
-    - sudo dnf install -y python3-pip xdg-utils ImageMagick
-    - pip3 install --quiet -r ci/requirements.txt
-    - git clone https://github.com/QubesOS/qubes-linux-utils ~/linux-utils
-    - git clone https://github.com/QubesOS/qubes-core-admin-client ~/core-admin-client
-  script:
-    - "export PYTHONPATH=~/core-admin-client:~/linux-utils/imgconverter"
-    - python3 -m pylint qubesappmenus
-    - python3 -m coverage run -m unittest -v qubesappmenus.tests
   after_script:
-    - "PATH=$PATH:$HOME/.local/bin"
-    - codecov -F unittests
-
+  - PATH=$PATH:$HOME/.local/bin
+  - codecov -F unittests
+  before_script:
+  - sudo dnf install -y python3-pip xdg-utils ImageMagick
+  - pip3 install --quiet -r ci/requirements.txt
+  - git clone https://github.com/QubesOS/qubes-linux-utils ~/linux-utils
+  - git clone https://github.com/QubesOS/qubes-core-admin-client ~/core-admin-client
+  script:
+  - export PYTHONPATH=~/core-admin-client:~/linux-utils/imgconverter
+  - python3 -m pylint qubesappmenus
+  - python3 -m coverage run -m unittest -v qubesappmenus.tests
+  stage: checks
+include:
+- file: /r4.1/gitlab-base.yml
+  project: QubesOS/qubes-continuous-integration
+- file: /r4.1/gitlab-dom0.yml
+  project: QubesOS/qubes-continuous-integration
+- file: /r4.1/gitlab-vm.yml
+  project: QubesOS/qubes-continuous-integration
+- file: /r4.2/gitlab-base.yml
+  project: QubesOS/qubes-continuous-integration
+- file: /r4.2/gitlab-host.yml
+  project: QubesOS/qubes-continuous-integration
+- file: /r4.2/gitlab-vm.yml
+  project: QubesOS/qubes-continuous-integration

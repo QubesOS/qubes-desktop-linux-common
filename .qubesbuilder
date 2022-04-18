@@ -1,0 +1,11 @@
+host:
+  rpm:
+    spec:
+    - rpm_spec/desktop-linux-common.spec
+vm:
+  rpm:
+    spec:
+    - rpm_spec/desktop-linux-common.spec
+  deb:
+    build:
+    - debian
