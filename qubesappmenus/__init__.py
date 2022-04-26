@@ -641,6 +641,15 @@ class Appmenus(object):
         vm.features['default-menu-items'] = ' '.join(applications_list)
 
     @staticmethod
+    def get_default_whitelist(vm):
+        """
+        Get default applications list for VMs created on this template
+        :param vm: VM object
+        :return: list of applications in default whitelist
+        """
+        return vm.features.get('default-menu-items', '').split(' ')
+
+    @staticmethod
     def set_whitelist(vm, applications_list):
         """Update list of applications to be included in the menu
 
@@ -727,6 +736,11 @@ parser_stdin_mode.add_argument(
          'for VMs based on this template,'
          'use \'-\' to read from stdin')
 parser.add_argument(
+    '--get-default-whitelist', metavar='PATH',
+    help='Get default list of applications to include in menu '
+         'for VMs based on this template'
+)
+parser.add_argument(
     '--source', action='store', default=None,
     help='Source VM to copy data from (for --init option)')
 parser.add_argument(
@@ -811,6 +825,9 @@ def main(args=None, app=None):
             if args.set_default_whitelist:
                 whitelist = retrieve_list(args.set_default_whitelist)
                 appmenus.set_default_whitelist(vm, whitelist)
+            if args.get_default_whitelist:
+                default_whitelist = appmenus.get_default_whitelist(vm)
+                print('\n'.join(default_whitelist))
             if args.set_whitelist:
                 whitelist = retrieve_list(args.set_whitelist)
                 appmenus.set_whitelist(vm, whitelist)
