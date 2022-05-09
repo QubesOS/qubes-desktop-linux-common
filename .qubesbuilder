@@ -1,10 +1,10 @@
 host:
   rpm:
-    spec:
+    build:
     - rpm_spec/desktop-linux-common.spec
 vm:
   rpm:
-    spec:
+    build:
     - rpm_spec/desktop-linux-common.spec
   deb:
     build:
