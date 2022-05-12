@@ -18,6 +18,5 @@ checks:tests:
     - python3 -m pylint qubesappmenus
     - python3 -m coverage run -m unittest -v qubesappmenus.tests
   after_script:
-    - "PATH=$PATH:$HOME/.local/bin"
-    - codecov -F unittests
+    - ci/codecov-wrapper -F unittests
 
