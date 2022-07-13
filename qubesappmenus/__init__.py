@@ -144,7 +144,7 @@ class Appmenus(object):
         :return: True if target file was changed, otherwise False
         """
         if source.startswith('/'):
-            with open(source) as f_source:
+            with open(source, encoding='utf-8') as f_source:
                 source = f_source.read()
         if dispvm:
             if '\nX-Qubes-DispvmExec=' not in source and '\nExec=' in source:
@@ -163,11 +163,11 @@ class Appmenus(object):
             replace("%VMDIR%", os.path.join(basedir, vm.name)). \
             replace("%XDGICON%", icon)
         if os.path.exists(destination_path):
-            with open(destination_path) as dest_f:
+            with open(destination_path, encoding='utf-8') as dest_f:
                 current_dest = dest_f.read()
                 if current_dest == data:
                     return False
-        with open(destination_path, "w") as dest_f:
+        with open(destination_path, "w", encoding='utf-8') as dest_f:
             dest_f.write(data)
         return True
 
@@ -193,7 +193,7 @@ class Appmenus(object):
         # TODO icon path (#2885)
         for filename in self.get_available_filenames(vm, template):
             field_values = {}
-            with open(filename) as file:
+            with open(filename, encoding='utf-8') as file:
                 name = None
                 main_section = False
                 for line in file:
@@ -353,7 +353,7 @@ class Appmenus(object):
             whitelist = vm.features['menu-items'].split(' ')
             appmenus = [x for x in appmenus if os.path.basename(x) in whitelist]
         elif os.path.exists(self.whitelist_path(vm)):
-            with open(self.whitelist_path(vm)) as whitelist_f:
+            with open(self.whitelist_path(vm), encoding='utf-8') as whitelist_f:
                 whitelist = [x.rstrip() for x in whitelist_f]
             appmenus = [x for x in appmenus if os.path.basename(x) in whitelist]
 
@@ -514,7 +514,7 @@ class Appmenus(object):
         if 'menu-items' in vm.features:
             whitelist = vm.features['menu-items'].split(' ')
         elif os.path.exists(whitelist):
-            with open(whitelist) as whitelist_f:
+            with open(whitelist, encoding='utf-8') as whitelist_f:
                 whitelist = [line.strip() for line in whitelist_f]
         else:
             whitelist = None
@@ -665,7 +665,7 @@ class Appmenus(object):
             return None
         if not os.path.exists(self.whitelist_path(vm)):
             return None
-        with open(self.whitelist_path(vm), 'r') as whitelist:
+        with open(self.whitelist_path(vm), 'r', encoding='utf-8') as whitelist:
             for line in whitelist:
                 line = line.strip()
                 if not line:
@@ -763,7 +763,7 @@ def retrieve_list(path):
     """
     if path == '-':
         return [x.rstrip() for x in sys.stdin.readlines()]
-    with open(path, 'r') as file:
+    with open(path, 'r', encoding='utf-8') as file:
         return [x.rstrip() for x in file.readlines()]
 
 

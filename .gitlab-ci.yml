@@ -1,7 +1,6 @@
 checks:tests:
   after_script:
-  - PATH=$PATH:$HOME/.local/bin
-  - codecov -F unittests
+  - ci/codecov-wrapper -F unittests
   before_script:
   - sudo dnf install -y python3-pip xdg-utils ImageMagick
   - pip3 install --quiet -r ci/requirements.txt

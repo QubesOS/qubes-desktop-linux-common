@@ -267,12 +267,12 @@ def create_template(path, name, values, legacy):
             "X-Qubes-DispvmExec=qvm-run -q -a --service --dispvm=%VMNAME% " \
             "-- qubes.StartApp+{}\n".format(name)
     try:
-        with open(path, "r") as path_f:
+        with open(path, "r", encoding='utf-8') as path_f:
             existing_desktop_entry = path_f.read()
     except FileNotFoundError:
         existing_desktop_entry = ''
     if desktop_entry != existing_desktop_entry:
-        with open(path, "w") as desktop_file:
+        with open(path, "w", encoding='utf-8') as desktop_file:
             desktop_file.write(desktop_entry)
 
 
