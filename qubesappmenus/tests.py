@@ -658,6 +658,20 @@ class TC_00_Appmenus(unittest.TestCase):
             ('info', ('Creating evince',), {}),
         ])
 
+    @unittest.mock.patch('subprocess.check_call')
+    def test_131_set_get_default_whitelist(self, mock_subprocess):
+        tpl = TestVM('test-inst-tpl',
+            klass='TemplateVM',
+            virt_mode='pvh',
+            updateable=True,
+            provides_network=False,
+            label=self.app.labels[1])
+        self.ext.appmenus_init(tpl)
+
+        whitelist = ['evince.desktop', 'xterm.desktop']
+
+        self.ext.set_default_whitelist(tpl, whitelist)
+        self.assertEqual(whitelist, self.ext.get_default_whitelist(tpl))
 
 
 def list_tests():
