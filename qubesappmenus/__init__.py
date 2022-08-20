@@ -457,7 +457,8 @@ class Appmenus(object):
         """Return if a path to a desktop name is for the old menu version.
         """
         return not (name.startswith('org.qubes-os.') or
-                    name.startswith('qubes-vm-directory-'))
+                    name.startswith('qubes-vm-directory-') or
+                    name.startswith('qubes-dispvm-directory-'))
 
     def _old_directory_path(self, vm):
         """Return the old path of the directory file for this VM
