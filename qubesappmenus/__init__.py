@@ -213,8 +213,8 @@ class Appmenus(object):
                             [x.strip() for x in line.split('=', 1)]
                         if field_name in fields:
                             field_values[field_name] = value
-            assert name is not None, \
-                'template {!r} does not contain name'.format(filename)
+            if name is None:
+                continue
             result = [os.path.basename(filename), name]
             if fields:
                 for field in fields:
