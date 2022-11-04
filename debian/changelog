@@ -1,3 +1,29 @@
+qubes-desktop-linux-common (4.1.13-1) unstable; urgency=medium
+
+  [ Marek Marczykowski-Górecki ]
+  * Adjust for updated pylint
+
+  [ Frédéric Pierret (fepitre) ]
+  * Drop Travis CI
+
+  [ Marek Marczykowski-Górecki ]
+  * ci: use a wrapper to properly mark coverage data
+
+  [ Marta Marczykowska-Górecka ]
+  * Add a --get-default-whitelist to qvm-appmenus
+
+  [ Frédéric Pierret (fepitre) ]
+  * Add Qubes Builder v2 integration
+  * .qubesbuilder: replace 'spec' by 'build'
+
+  [ Saswat Padhi ]
+  * Fix `_is_old_path` for dispvm directory names
+
+  [ Marta Marczykowska-Górecka ]
+  * Don't crash qvm-appmenus on erroneous .desktop files
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Fri, 04 Nov 2022 16:23:01 +0100
+
 qubes-desktop-linux-common (4.1.12-1) unstable; urgency=medium
 
   [ Marek Marczykowski-Górecki ]
