@@ -738,7 +738,7 @@ parser_stdin_mode.add_argument(
          'for VMs based on this template,'
          'use \'-\' to read from stdin')
 parser.add_argument(
-    '--get-default-whitelist', metavar='PATH',
+    '--get-default-whitelist', action='store_true',
     help='Get default list of applications to include in menu '
          'for VMs based on this template'
 )
