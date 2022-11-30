@@ -11,7 +11,7 @@ install:
 	### Icons
 	mkdir -p $(DESTDIR)/usr/share/qubes/icons
 	for icon in icons/*.png; do \
-		convert -resize 48 $$icon $(DESTDIR)/usr/share/qubes/$$icon; \
+		gm convert -resize 48 $$icon $(DESTDIR)/usr/share/qubes/$$icon; \
 	done
 	### Appmenus
 	# force /usr/bin before /bin to have /usr/bin/python instead of /bin/python

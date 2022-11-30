@@ -17,7 +17,7 @@ BuildRequires:	pandoc
 BuildRequires:	python%{python3_pkgversion}
 BuildRequires:	python%{python3_pkgversion}-devel
 BuildRequires:	python%{python3_pkgversion}-setuptools
-BuildRequires:	ImageMagick
+BuildRequires:	GraphicsMagick
 BuildRequires: desktop-file-utils >= %{desktop_file_utils_version}
 Requires:	xdotool
 Requires:	xprop
