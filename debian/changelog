@@ -1,3 +1,11 @@
+qubes-desktop-linux-common (4.1.14-1) unstable; urgency=medium
+
+  [ Marta Marczykowska-Górecka ]
+  * Fix absolutely silly bug that required PATH for --get-default-
+    whitelist
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Thu, 08 Dec 2022 16:36:42 +0100
+
 qubes-desktop-linux-common (4.1.13-1) unstable; urgency=medium
 
   [ Marek Marczykowski-Górecki ]
