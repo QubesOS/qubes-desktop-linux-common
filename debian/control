@@ -5,7 +5,7 @@ Maintainer: Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>
 Build-Depends:
  debhelper (>= 9),
  dh-python,
- imagemagick,
+ graphicsmagick,
  python3-all-dev,
  python3-setuptools,
 Standards-Version: 3.9.5

@@ -2,7 +2,7 @@ checks:tests:
   after_script:
   - ci/codecov-wrapper -F unittests
   before_script:
-  - sudo dnf install -y python3-pip xdg-utils ImageMagick
+  - sudo dnf install -y python3-pip xdg-utils GraphicsMagick
   - pip3 install --quiet -r ci/requirements.txt
   - git clone https://github.com/QubesOS/qubes-linux-utils ~/linux-utils
   - git clone https://github.com/QubesOS/qubes-core-admin-client ~/core-admin-client
