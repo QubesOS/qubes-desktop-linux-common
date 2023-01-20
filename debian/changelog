@@ -1,3 +1,10 @@
+qubes-desktop-linux-common (4.2.0-1) unstable; urgency=medium
+
+  [ Mateusz Piórkowski ]
+  * Replace ImageMagick with GraphicsMagick
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Fri, 20 Jan 2023 02:02:47 +0100
+
 qubes-desktop-linux-common (4.1.14-1) unstable; urgency=medium
 
   [ Marta Marczykowska-Górecka ]
