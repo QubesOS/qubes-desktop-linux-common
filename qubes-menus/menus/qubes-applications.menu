@@ -16,6 +16,9 @@
         <Filename>exo-file-manager.desktop</Filename>
         <Filename>exo-mail-reader.desktop</Filename>
         <Filename>exo-web-browser.desktop</Filename>
+        <Filename>xfce4-file-manager.desktop</Filename>
+        <Filename>xfce4-mail-reader.desktop</Filename>
+        <Filename>xfce4-web-browser.desktop</Filename>
     </Exclude>
 
     <!-- Add stock tarball installs to menus -->
