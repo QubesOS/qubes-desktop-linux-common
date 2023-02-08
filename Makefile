@@ -17,6 +17,10 @@ install:
 	# force /usr/bin before /bin to have /usr/bin/python instead of /bin/python
 	PATH="/usr/bin:$$PATH" $(PYTHON) setup.py install $(PYTHON_PREFIX_ARG) -O1 --skip-build --root $(DESTDIR)
 
+	### Fix environment
+	mkdir -p $(DESTDIR)/etc/X11/xinit/xinitrc.d/
+	cp xinit/60-desktop-env-qubes.sh $(DESTDIR)/etc/X11/xinit/xinitrc.d/60-desktop-env-qubes.sh
+
 	mkdir -p $(DESTDIR)/etc/qubes-rpc/policy
 	install -m 0755 qubesappmenus/qubes.SyncAppMenus $(DESTDIR)/etc/qubes-rpc/
 
