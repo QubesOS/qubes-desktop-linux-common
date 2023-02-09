@@ -10,13 +10,11 @@ extension-pkg-whitelist=lxml.etree
 #  - consider-using-dict-comprehension
 #  - not-an-iterable
 disable=
-  bad-continuation,
   raising-format-tuple,
   inconsistent-return-statements,
   duplicate-code,
   fixme,
   locally-disabled,
-  locally-enabled,
   useless-object-inheritance,
   consider-using-set-comprehension,
   consider-using-dict-comprehension,
