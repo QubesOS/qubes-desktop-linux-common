@@ -26,7 +26,7 @@
 import re
 import os
 import sys
-import pipes
+import shlex
 import pkg_resources
 import qubesimgconverter
 
@@ -252,10 +252,10 @@ def create_template(path, name, values, legacy):
 
     if legacy:
         desktop_entry += "Exec=qvm-run -q -a %VMNAME% -- {0}\n".format(
-            pipes.quote(values['Exec']))
+            shlex.quote(values['Exec']))
         desktop_entry += \
             "X-Qubes-DispvmExec=qvm-run -q -a --dispvm=%VMNAME% -- {0}\n".\
-            format(pipes.quote(values['Exec']))
+            format(shlex.quote(values['Exec']))
     else:
         # already validated before, but make sure no one will break it
         assert ' ' not in name
