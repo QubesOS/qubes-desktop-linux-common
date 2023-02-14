@@ -6,3 +6,4 @@ usr/lib/python3/dist-packages/qubesappmenus/*
 usr/lib/python3/dist-packages/qubesdesktop-*.egg-info/*
 usr/lib/python3/dist-packages/qubesappmenusext/*
 etc/qubes-rpc/qubes.SyncAppMenus
+etc/X11/xinit/xinitrc.d/60-desktop-env-qubes.sh

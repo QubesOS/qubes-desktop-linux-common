@@ -123,3 +123,5 @@ fi
 %dir %{_sysconfdir}/xdg/menus/settings-merged
 %config %{_sysconfdir}/xdg/menus/*.menu
 %{_datadir}/desktop-directories/*.directory
+
+/etc/X11/xinit/xinitrc.d/60-desktop-env-qubes.sh
