@@ -1,3 +1,18 @@
+qubes-desktop-linux-common (4.2.1-1) unstable; urgency=medium
+
+  [ Marta Marczykowska-Górecka ]
+  * Set systemctl env to correctly use XDG_CURRENT_DESKTOP
+  * Remove obsolete pylint opts
+  * Remove obsolete pipes module
+
+  [ Marek Marczykowski-Górecki ]
+  * menu: Exclude file manager, mail reader and web browser in Xfce 4.16
+    too
+  * Properly place new qubes GUI tools in the menu
+  * Revert "Set systemctl env to correctly use XDG_CURRENT_DESKTOP"
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Thu, 16 Feb 2023 02:05:50 +0100
+
 qubes-desktop-linux-common (4.2.0-1) unstable; urgency=medium
 
   [ Mateusz Piórkowski ]
