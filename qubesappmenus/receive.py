@@ -59,14 +59,14 @@ appmenus_line_size = 1024
 appmenus_line_count = 100000
 
 # regexps for sanitization of retrieved values
-std_re = re.compile(r"^[/a-zA-Z0-9.,:&()_ +-]*$")
+std_re = re.compile(r"\A[/a-zA-Z0-9.,:&()_ +-]*\Z")
 fields_regexp = {
     "Name": std_re,
     "GenericName": std_re,
     "Comment": std_re,
-    "Categories": re.compile(r"^[a-zA-Z0-9/.;:'() -]*$"),
-    "Exec": re.compile(r"^[a-zA-Z0-9()_&>/{}:.= -]*$"),
-    "Icon": re.compile(r"^[a-zA-Z0-9/_.-]*$"),
+    "Categories": re.compile(r"\A[a-zA-Z0-9/.;:'() -]*\Z"),
+    "Exec": re.compile(r"\A[a-zA-Z0-9()_&>/{}:.= -]*\Z"),
+    "Icon": re.compile(r"\A[a-zA-Z0-9/_.-]*\Z"),
 }
 
 CATEGORIES_WHITELIST = {
@@ -160,7 +160,7 @@ def get_appmenus(vm):
     line_rx = re.compile(
         r"([a-zA-Z0-9._-]+?)(?:\.desktop)?:"
         r"([a-zA-Z0-9-]+(?:\[[a-zA-Z@_]+\])?)\s*=\s*(.*)")
-    ignore_rx = re.compile(r".*([a-zA-Z0-9._-]+.desktop):(#.*|\s*)$")
+    ignore_rx = re.compile(r"\A.*([a-zA-Z0-9._-]+.desktop):(#.*|\s*)\Z")
     for untrusted_line in untrusted_appmenulist:
         # Ignore blank lines and comments
         if not untrusted_line or ignore_rx.match(untrusted_line):
