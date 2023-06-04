@@ -42,6 +42,11 @@ import qubesimgconverter
 
 basedir = os.path.join(xdg.BaseDirectory.xdg_data_home, 'qubes-appmenus')
 
+def vm_name_escape(vm_name: str) -> str:
+    """Escape a VM name for use in a .desktop file name"""
+    return ('_' + vm_name.replace('_', '_u')
+                         .replace('-', '_d')
+                         .replace('.', '_p'))
 
 class DispvmNotSupportedError(qubesadmin.exc.QubesException):
     """Creating Disposable VM menu entries not supported by this template"""
@@ -234,7 +239,7 @@ class Appmenus(object):
             prefix = self.qubes_dispvm_desktop
         else:
             prefix = self.qubes_vm_desktop
-        return '.'.join((prefix, str(vm), appmenu_basename))
+        return '.'.join((prefix, vm_name_escape(str(vm)), appmenu_basename))
 
     def settings_name(self, vm):
         """Return the basename of the .desktop file for the “Qube Settings”
@@ -242,7 +247,9 @@ class Appmenus(object):
 
         :param vm: QubesVM object for the VM.
         """
-        return '.'.join((self.qubes_vm_desktop_settings, str(vm), 'desktop'))
+        return '.'.join((self.qubes_vm_desktop_settings,
+                         vm_name_escape(str(vm)),
+                         'desktop'))
 
     def _do_remove_appmenus(self, vm, appmenus_to_remove, appmenus_dir,
             refresh_cache):
@@ -399,12 +406,12 @@ class Appmenus(object):
             appmenus_to_remove = [
                 x for x in appmenus_to_remove
                 if not x.startswith(self.qubes_dispvm_desktop) and
-                   not x.startswith('qubes-dispvm-directory-')]
+                   not x.startswith('qubes-dispvm-directory_')]
         elif dispvm:
             appmenus_to_remove = [
                 x for x in appmenus_to_remove
                 if not x.startswith(self.qubes_vm_desktop) and
-                   not x.startswith('qubes-vm-directory-') and
+                   not x.startswith('qubes-vm-directory_') and
                    not x.startswith(self.qubes_vm_desktop_settings)]
         self._do_remove_appmenus(vm, appmenus_to_remove, appmenus_dir,
                 refresh_cache)
@@ -454,11 +461,15 @@ class Appmenus(object):
 
     @staticmethod
     def _is_old_path(name):
-        """Return if a path to a desktop name is for the old menu version.
         """
-        return not (name.startswith('org.qubes-os.') or
-                    name.startswith('qubes-vm-directory-') or
-                    name.startswith('qubes-dispvm-directory-'))
+        Return if a path to a desktop name is for the old (<= R4.1)
+        menu version.
+        """
+        return not (name.startswith('org.qubes-os.dispvm._') or
+                    name.startswith('org.qubes-os.vm._') or
+                    name.startswith('org.qubes-os.qubes-vm-settings._') or
+                    name.startswith('qubes-vm-directory_') or
+                    name.startswith('qubes-dispvm-directory_'))
 
     def _old_directory_path(self, vm):
         """Return the old path of the directory file for this VM
@@ -468,12 +479,9 @@ class Appmenus(object):
     def _directory_path(self, vm, dispvm=False):
         """Return the path of the directory file for this VM
         """
-        if dispvm:
-            basename = (
-               'qubes-dispvm-directory-' + str(vm) + '.directory')
-        else:
-            basename = 'qubes-vm-directory-' + str(vm) + '.directory'
-        return os.path.join(self.appmenus_dir(vm), basename)
+        basename = 'qubes-dispvm-directory' if dispvm else 'qubes-vm-directory'
+        return os.path.join(self.appmenus_dir(vm),
+                            basename + vm_name_escape(str(vm)) + '.directory')
 
     def appmenus_remove(self, vm, refresh_cache=True):
         """Remove desktop files for particular VM
@@ -567,24 +575,24 @@ class Appmenus(object):
         :param vm:
         :param src: source VM to copy data from
         """
-        os.makedirs(os.path.join(basedir, vm.name), exist_ok=True)
+        prefix_dir = os.path.join(basedir, vm.name)
+        os.makedirs(prefix_dir, exist_ok=True)
         clone_from_src = src is not None
         if src is None:
             try:
                 src = vm.template
             except AttributeError:
                 pass
-        own_templates_dir = os.path.join(basedir, vm.name,
+        own_templates_dir = os.path.join(prefix_dir,
                                          AppmenusSubdirs.templates_subdir)
         own_template_icons_dir = os.path.join(
-            basedir, vm.name, AppmenusSubdirs.template_icons_subdir)
+            prefix_dir, AppmenusSubdirs.template_icons_subdir)
         if src is None:
             os.makedirs(own_templates_dir, exist_ok=True)
-            os.makedirs(os.path.join(basedir, vm.name,
+            os.makedirs(os.path.join(prefix_dir,
                                      AppmenusSubdirs.template_icons_subdir),
                         exist_ok=True)
 
-        if src is None:
             vm.log.info("Creating appmenus directory: {0}".format(
                 own_templates_dir))
             with open(
@@ -596,28 +604,28 @@ class Appmenus(object):
 
         source_whitelist_filename = 'vm-' + AppmenusSubdirs.whitelist
         if src and ('default-menu-items' in src.features or os.path.exists(
-                os.path.join(basedir, src.name, source_whitelist_filename))):
+                os.path.join(prefix_dir, source_whitelist_filename))):
             vm.log.info("Creating default whitelisted apps list: {0}".
-                        format(basedir + '/' + vm.name + '/' +
-                               AppmenusSubdirs.whitelist))
+                        format(prefix_dir + '/' + AppmenusSubdirs.whitelist))
             if 'default-menu-items' in src.features:
                 vm.features['menu-items'] = \
                     src.features['default-menu-items']
             else:
                 self.set_whitelist(vm, retrieve_list(os.path.join(
-                    basedir, src.name, source_whitelist_filename)))
+                    prefix_dir, source_whitelist_filename)))
 
         # NOTE: No need to copy whitelists from VM features as that is
         # automatically done with clones
         if clone_from_src:
             for prefix in ('', 'vm-', 'netvm-'):
                 whitelist = prefix + AppmenusSubdirs.whitelist
-                if os.path.exists(os.path.join(basedir, src.name, whitelist)) \
+                p = os.path.join(prefix_dir, whitelist)
+                if os.path.exists(p) \
                         and (prefix + 'menu-items') not in vm.features:
                     vm.log.info("Copying whitelisted apps list: {0}".
                                 format(whitelist))
-                    vm.features[prefix + 'menu-items'] = ' '.join(retrieve_list(
-                        os.path.join(basedir, src.name, whitelist)))
+                    vm.features[prefix + 'menu-items'] = \
+                            ' '.join(retrieve_list(p))
 
             vm.log.info("Creating/copying appmenus templates")
             src_dir = self.templates_dirs(src)[0]

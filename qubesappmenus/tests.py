@@ -25,6 +25,7 @@
 import io
 import os
 import tempfile
+import sys
 
 import unittest
 import unittest.mock
@@ -99,6 +100,7 @@ VMPREFIX = 'test-'
 class TC_00_Appmenus(unittest.TestCase):
     """Unittests for appmenus, theoretically runnable from git checkout"""
     def setUp(self):
+        self.maxDiff = None
         super(TC_00_Appmenus, self).setUp()
         vmname = VMPREFIX + 'standalone'
         self.standalone = TestVM(
@@ -149,72 +151,82 @@ class TC_00_Appmenus(unittest.TestCase):
         self.assertEqual(
             self.ext.templates_dirs(self.standalone),
             [os.path.join(self.basedir,
-                self.standalone.name, 'apps.templates')]
+                          self.standalone.name,
+                          'apps.templates')]
         )
         self.assertEqual(
             self.ext.templates_dirs(self.template),
             [os.path.join(self.basedir,
-                self.template.name, 'apps.templates')]
+                          self.template.name,
+                          'apps.templates')]
         )
         self.assertEqual(
             self.ext.templates_dirs(self.appvm),
             [os.path.join(self.basedir,
-                self.appvm.name, 'apps.templates'),
+                          self.appvm.name,
+                          'apps.templates'),
              os.path.join(self.basedir,
-                self.template.name, 'apps.templates')]
+                          self.template.name,
+                          'apps.templates')]
         )
 
     def test_001_template_icons_dir(self):
         self.assertEqual(
             self.ext.template_icons_dirs(self.standalone),
             [os.path.join(self.basedir,
-                self.standalone.name, 'apps.tempicons')]
+                          self.standalone.name,
+                          'apps.tempicons')]
         )
         self.assertEqual(
             self.ext.template_icons_dirs(self.template),
             [os.path.join(self.basedir,
-                self.template.name, 'apps.tempicons')]
+                          self.template.name,
+                          'apps.tempicons')]
         )
         self.assertEqual(
             self.ext.template_icons_dirs(self.appvm),
             [os.path.join(self.basedir,
-                self.appvm.name, 'apps.tempicons'),
+                          self.appvm.name,
+                          'apps.tempicons'),
              os.path.join(self.basedir,
-                self.template.name, 'apps.tempicons')]
+                          self.template.name,
+                          'apps.tempicons')]
         )
 
     def test_002_appmenus_dir(self):
         self.assertEqual(
             self.ext.appmenus_dir(self.standalone),
             os.path.join(self.basedir,
-                self.standalone.name, 'apps')
+                         self.standalone.name,
+                         'apps')
         )
         self.assertEqual(
             self.ext.appmenus_dir(self.template),
             os.path.join(self.basedir,
-                self.template.name, 'apps')
+                         self.template.name,
+                         'apps')
         )
         self.assertEqual(
             self.ext.appmenus_dir(self.appvm),
             os.path.join(self.basedir,
-                self.appvm.name, 'apps')
+                         self.appvm.name,
+                         'apps')
         )
 
     def test_003_icons_dir(self):
         self.assertEqual(
             self.ext.icons_dir(self.standalone),
             os.path.join(self.basedir,
-                self.standalone.name, 'apps.icons')
+                         self.standalone.name, 'apps.icons')
         )
         self.assertEqual(
             self.ext.icons_dir(self.template),
             os.path.join(self.basedir,
-                self.template.name, 'apps.icons')
+                         self.template.name, 'apps.icons')
         )
         self.assertEqual(
             self.ext.icons_dir(self.appvm),
-            os.path.join(self.basedir,
-                self.appvm.name, 'apps.icons')
+            os.path.join(self.basedir, self.appvm.name, 'apps.icons')
         )
 
     def test_005_created_appvm(self):
@@ -331,20 +343,20 @@ class TC_00_Appmenus(unittest.TestCase):
 
         # "Template (disp)" menu
         dirfile_path = os.path.join(appmenus_dir,
-            'qubes-vm-directory-test-inst-dvm.directory')
+            'qubes-vm-directory_test_dinst_ddvm.directory')
         self.assertPathExists(dirfile_path)
         with open(dirfile_path, 'rb') as f:
             content = f.read()
             self.assertIn(b'Name=Template (disp): test-inst-dvm\n', content)
         evince_path = os.path.join(appmenus_dir,
-            'org.qubes-os.vm.test-inst-dvm.evince.desktop')
+            'org.qubes-os.vm._test_dinst_ddvm.evince.desktop')
         self.assertPathExists(evince_path)
         with open(evince_path, 'rb') as f:
             content = f.read()
             self.assertNotIn(b'X-Qubes-NonDispvmExec=', content)
             self.assertIn(b'X-Qubes-DispvmExec=', content)
         settings_path = os.path.join(appmenus_dir,
-            'org.qubes-os.qubes-vm-settings.test-inst-dvm.desktop')
+            'org.qubes-os.qubes-vm-settings._test_dinst_ddvm.desktop')
         self.assertPathExists(settings_path)
         with open(settings_path, 'rb') as f:
             content = f.read()
@@ -354,13 +366,13 @@ class TC_00_Appmenus(unittest.TestCase):
 
         # "Disposable" menu
         dirfile_path = os.path.join(appmenus_dir,
-            'qubes-dispvm-directory-test-inst-dvm.directory')
+            'qubes-dispvm-directory_test_dinst_ddvm.directory')
         self.assertPathExists(dirfile_path)
         with open(dirfile_path, 'rb') as f:
             content = f.read()
             self.assertIn(b'Name=Disposable: test-inst-dvm\n', content)
         evince_path = os.path.join(appmenus_dir,
-            'org.qubes-os.dispvm.test-inst-dvm.evince.desktop')
+            'org.qubes-os.dispvm._test_dinst_ddvm.evince.desktop')
         self.assertPathExists(evince_path)
         with open(evince_path, 'rb') as f:
             content = f.read()
@@ -513,7 +525,7 @@ class TC_00_Appmenus(unittest.TestCase):
         self.assertEqual(os.listdir(appmenus_dir),[])
         should_be_deleted = []
         for i in 'desktop', 'directory':
-            for j in 'bad', 'org.qubes-os':
+            for j in 'bad', 'org.qubes-os', 'org.qubes-os.vm._':
                 bad_path = os.path.join(appmenus_dir, j + '.' + i)
                 with open(bad_path, 'wb') as f:
                     f.write(b'not a valid desktop file')
@@ -531,25 +543,29 @@ class TC_00_Appmenus(unittest.TestCase):
                 f.read()
             )
 
-        retval = mock_subprocess.mock_calls
-        (_,(first_call,),_,), (_,(second_call,),_,), (_,(third_call,),_,), = retval
         assert should_be_deleted[0].endswith('.desktop')
+        retval = mock_subprocess.mock_calls
+        assert len(retval) == 3, f"wrong length of {retval!r}"
+        (_,(first_call,),_,), (_,(second_call,),_,), (_,(third_call,),_,), = retval
         self.assertEqual(
-            first_call[:],
-            ['xdg-desktop-menu', 'uninstall', '--noupdate', should_be_deleted[2], should_be_deleted[0]])
+            first_call[:3],
+            ['xdg-desktop-menu', 'uninstall', '--noupdate'])
+        self.assertEqual(sorted(first_call[3:]),
+                         sorted((should_be_deleted[3], should_be_deleted[4], should_be_deleted[1], should_be_deleted[0])))
         self.assertEqual(
-            second_call[:],
-            ['xdg-desktop-menu', 'uninstall', '--noupdate', should_be_deleted[3], should_be_deleted[1]])
+            second_call[:3],
+            ['xdg-desktop-menu', 'uninstall', '--noupdate']),
+        self.assertEqual(sorted(second_call[3:]), sorted((should_be_deleted[5], should_be_deleted[2])))
         self.assertEqual(
             third_call[:3],
             ['xdg-desktop-menu', 'install', '--noupdate'])
         prefix = os.path.join(appmenus_dir, 'org.qubes-os.')
         self.maxDiff = None
         new_files = [
-            os.path.join(appmenus_dir, 'qubes-vm-directory-test-inst-app.directory'),
-            prefix + 'qubes-vm-settings.test-inst-app.desktop',
-            prefix + 'vm.test-inst-app.evince.desktop',
-            prefix + 'vm.test-inst-app.qubes-start.desktop',
+            os.path.join(appmenus_dir, 'qubes-vm-directory_test_dinst_dapp.directory'),
+            prefix + 'qubes-vm-settings._test_dinst_dapp.desktop',
+            prefix + 'vm._test_dinst_dapp.evince.desktop',
+            prefix + 'vm._test_dinst_dapp.qubes-start.desktop',
         ]
         self.assertEqual(third_call[3], new_files[0])
         self.assertEqual(set(third_call[4:]), set(new_files[1:]))
@@ -569,8 +585,9 @@ class TC_00_Appmenus(unittest.TestCase):
                 'evince.desktop'), 'wb') as f:
             f.write(pkg_resources.resource_string(__name__,
                 'test-data/evince.desktop.template'))
-        with open(os.path.join(self.basedir, tpl.name,
-                'vm-whitelisted-appmenus.list'), 'wb') as f:
+        with open(os.path.join(self.basedir,
+                               tpl.name,
+                               'vm-whitelisted-appmenus.list'), 'wb') as f:
             f.write(b'evince.desktop\n')
         appvm = TestVM('test-inst-app',
             klass='AppVM',
@@ -599,9 +616,10 @@ class TC_00_Appmenus(unittest.TestCase):
         prefix = self.basedir + '/test-inst-app/apps/org.qubes-os.'
         self.maxDiff = None
         self.assertEqual(args[3:], [
-            self.basedir + '/test-inst-app/apps/qubes-vm-directory-test-inst-app.directory',
-            prefix + 'vm.test-inst-app.evince.desktop',
-            prefix + 'qubes-vm-settings.test-inst-app.desktop',
+            self.basedir + '/test-inst-app/apps/qubes-vm-directory_test_dinst_dapp.directory',
+            prefix + 'vm._test_dinst_dapp.evince.desktop',
+            prefix + 'vm._test_dinst_dapp.qubes-start.desktop',
+            prefix + 'qubes-vm-settings._test_dinst_dapp.desktop',
         ])
 
     def test_130_process_appmenus_templates(self):

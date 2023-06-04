@@ -2,7 +2,7 @@
 Version=1.0
 Type=Application
 TryExec=qubes-vm-settings
-Exec=qubes-vm-settings %VMNAME%
+Exec=qubes-vm-settings -- %VMNAME%
 Icon=qubes-appmenu-select
 Terminal=false
 Name=%VMNAME%: Qube Settings

@@ -309,6 +309,8 @@ def process_appmenus_templates(appmenusext, vm, appmenus):
                     __name__,
                     'qubes-start.desktop.template'))
 
+    # Do not create reserved Start entry
+    appmenus.pop('qubes-start', None)
     for appmenu_name in appmenus.keys():
         appmenu_path = os.path.join(
             templates_dir,

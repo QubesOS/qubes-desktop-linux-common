@@ -3,4 +3,4 @@
 
 ## Please use a single # to start your custom comments
 
-$anyvm	dom0	allow
+@anyvm	dom0	allow
