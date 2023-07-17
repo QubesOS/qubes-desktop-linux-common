@@ -1,3 +1,11 @@
+qubes-desktop-linux-common (4.2.3-1) unstable; urgency=medium
+
+  [ Demi Marie Obenour ]
+  * Reject trailing newlines explicitly
+  * Handle periods in qube names
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Mon, 17 Jul 2023 17:23:05 +0200
+
 qubes-desktop-linux-common (4.2.2-1) unstable; urgency=medium
 
   [ Marta Marczykowska-Górecka ]
