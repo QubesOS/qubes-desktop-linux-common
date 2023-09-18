@@ -57,48 +57,55 @@ class AppmenusExtension(qubes.ext.Extension):
     async def update_appmenus(self, vm):
         guivm = vm.guivm
         if not guivm:
-            vm.log.warning("VM for '%s' does not have GUI VM, not updating menu", vm.name)
+            self.log.warning("VM for '%s' does not have GUI VM, not updating menu", vm.name)
             return
         if not guivm.is_running():
-            vm.log.warning("GUI VM for '%s' is not running, not updating menu", vm.name)
+            self.log.warning("GUI VM for '%s' is not running, queueing menu update", vm.name)
+            # please no async code between those two calls
+            current_queue = guivm.features.get('menu-update-pending-for', '').split(' ')
+            if vm.name not in current_queue:
+                guivm.features['menu-update-pending-for'] = ' '.join(current_queue + [vm.name])
             return
-        vm.log.info("Updating appmenus for '%s' in '%s'", vm.name, guivm.name)
+        self.log.info("Updating appmenus for '%s' in '%s'", vm.name, guivm.name)
         if guivm.klass == 'AdminVM' or guivm.features.check_with_template("supported-rpc.qubes.UpdateAppMenusFor", None):
             try:
                 await guivm.run_service_for_stdio("qubes.UpdateAppMenusFor+" + vm.name)
             except subprocess.CalledProcessError as e:
-                vm.log.error("Failed to update appmenus for '%s' in '%s': %s",
+                self.log.error("Failed to update appmenus for '%s' in '%s': %s",
                     vm.name, guivm.name, sanitize_stderr_for_log(e.stderr))
         else:
             # older desktop-linux-common
             try:
                 await guivm.run_for_stdio("qvm-appmenus --update --quiet --force -- " + vm.name)
             except subprocess.CalledProcessError as e:
-                vm.log.error("Failed to update appmenus for '%s' in '%s': %s",
+                self.log.error("Failed to update appmenus for '%s' in '%s': %s",
                     vm.name, guivm.name, sanitize_stderr_for_log(e.stderr))
 
-    async def remove_appmenus(self, vm):
-        guivm = vm.guivm
+    async def remove_appmenus(self, vm_name, guivm):
         if not guivm:
-            vm.log.warning("VM for '%s' does not have GUI VM, not removing menu", vm.name)
+            self.log.warning("VM for '%s' does not have GUI VM, not removing menu", vm_name)
             return
         if not guivm.is_running():
-            vm.log.warning("GUI VM for '%s' is not running, not removing menu", vm.name)
+            self.log.warning("GUI VM for '%s' is not running, queueing menu removal", vm_name)
+            # please no async code between those two calls
+            current_queue = guivm.features.get('menu-remove-pending-for', '').split(' ')
+            if vm_name not in current_queue:
+                guivm.features['menu-remove-pending-for'] = ' '.join(current_queue + [vm_name])
             return
-        vm.log.info("Removing appmenus for '%s' in '%s'", vm.name, guivm.name)
+        self.log.info("Removing appmenus for '%s' in '%s'", vm_name, guivm.name)
         if guivm.klass == 'AdminVM' or guivm.features.check_with_template("supported-rpc.qubes.RemoveAppMenusFor", None):
             try:
-                await guivm.run_service_for_stdio("qubes.RemoveAppMenusFor+" + vm.name)
+                await guivm.run_service_for_stdio("qubes.RemoveAppMenusFor+" + vm_name)
             except subprocess.CalledProcessError as e:
-                vm.log.error("Failed to remove appmenus for '%s' in '%s': %s",
-                    vm.name, guivm.name, sanitize_stderr_for_log(e.stderr))
+                self.log.error("Failed to remove appmenus for '%s' in '%s': %s",
+                    vm_name, guivm.name, sanitize_stderr_for_log(e.stderr))
         else:
             # older desktop-linux-common
             try:
-                await guivm.run_for_stdio("qvm-appmenus --remove --quiet -- " + vm.name)
+                await guivm.run_for_stdio("qvm-appmenus --remove --quiet -- " + vm_name)
             except subprocess.CalledProcessError as e:
-                vm.log.error("Failed to remove appmenus for '%s' in '%s': %s",
-                    vm.name, guivm.name, sanitize_stderr_for_log(e.stderr))
+                self.log.error("Failed to remove appmenus for '%s' in '%s': %s",
+                    vm_name, guivm.name, sanitize_stderr_for_log(e.stderr))
 
     @qubes.ext.handler('domain-create-on-disk')
     async def create_on_disk(self, vm, event):
@@ -112,7 +119,7 @@ class AppmenusExtension(qubes.ext.Extension):
 
     @qubes.ext.handler('domain-remove-from-disk')
     async def remove_from_disk(self, vm, event):
-        await self.remove_appmenus(vm)
+        await self.remove_appmenus(vm.name, vm.guivm)
 
     @qubes.ext.handler('property-set:label')
     def label_setter(self, vm, event, **kwargs):
@@ -144,7 +151,25 @@ class AppmenusExtension(qubes.ext.Extension):
     def on_feature_set_internal(self, vm, event, feature, value,
             oldvalue=None):
         if value:
-            asyncio.ensure_future(self.remove_appmenus(vm))
+            asyncio.ensure_future(self.remove_appmenus(vm.name, vm.guivm))
+
+    @qubes.ext.handler('domains-start')
+    async def on_domain_start(self, vm, event, **kwargs):
+        """Process queued menu updates"""
+        pending_update = vm.features.get('menu-update-pending-for', '').split(' ')
+        pending_remove = vm.features.get('menu-remove-pending-for', '').split(' ')
+        if pending_update or pending_remove:
+            vm.log.info("Processing pending menu updates")
+            for to_remove in pending_remove:
+                await self.remove_appmenus(to_remove, guivm=vm)
+            del vm.features['menu-update-pending-for']
+            for to_update in pending_update:
+                if to_update not in vm.app.domains:
+                    # removed in the meantime, and should be handled
+                    # by the loop above
+                    continue
+                await self.update_appmenus(vm.app.domains[to_update])
+            del vm.features['menu-update-pending-for']
 
     @qubes.ext.handler('template-postinstall')
     def on_template_postinstall(self, vm, event):
