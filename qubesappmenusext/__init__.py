@@ -91,6 +91,12 @@ class AppmenusExtension(qubes.ext.Extension):
         asyncio.ensure_future(self.run_as_user(
             ['qvm-appmenus', '--quiet', '--force', '--update', vm.name]))
 
+    @qubes.ext.handler('domain-feature-set:menu-items')
+    def on_feature_set_appmenus_dispvm(self, vm, event, feature,
+            value, oldvalue=None):
+        asyncio.ensure_future(self.run_as_user(
+            ['qvm-appmenus', '--quiet', '--force', '--update', vm.name]))
+
     @qubes.ext.handler('domain-feature-delete:internal')
     def on_feature_del_internal(self, vm, event, feature):
         asyncio.ensure_future(self.run_as_user(
