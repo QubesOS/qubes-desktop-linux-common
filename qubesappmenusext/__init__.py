@@ -129,6 +129,12 @@ class AppmenusExtension(qubes.ext.Extension):
     def provides_network_setter(self, vm, event, **kwargs):
         asyncio.ensure_future(self.update_appmenus(vm))
 
+    @qubes.ext.handler('property-set:guivm')
+    def provides_network_setter(self, vm, event, name, newvalue, oldvalue=None):
+        if oldvalue and oldvalue != newvalue:
+            asyncio.ensure_future(self.remove_appmenus(vm.name, oldvalue))
+        asyncio.ensure_future(self.update_appmenus(vm))
+
     @qubes.ext.handler('domain-feature-delete:appmenus-dispvm')
     def on_feature_del_appmenus_dispvm(self, vm, event, feature):
         asyncio.ensure_future(self.update_appmenus(vm))
