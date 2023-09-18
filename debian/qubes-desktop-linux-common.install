@@ -6,3 +6,5 @@ usr/lib/python3/dist-packages/qubesappmenus/*
 usr/lib/python3/dist-packages/qubesdesktop-*.egg-info/*
 usr/lib/python3/dist-packages/qubesappmenusext/*
 etc/qubes-rpc/qubes.SyncAppMenus
+etc/qubes-rpc/qubes.UpdateAppMenusFor
+etc/qubes-rpc/qubes.RemoveAppMenusFor

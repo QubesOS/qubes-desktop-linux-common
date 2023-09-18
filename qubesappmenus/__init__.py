@@ -693,6 +693,8 @@ class Appmenus(object):
     def appmenus_update(self, vm, force=False):
         """Update (regenerate) desktop files and icons for this VM and (in
         case of template) child VMs"""
+        if not os.path.exists(os.path.join(basedir, vm.name)):
+            self.appmenus_init(vm)
         self.appicons_create(vm, force=force)
         self.appmenus_create(vm, force=force, refresh_cache=False)
         if hasattr(vm, 'appvms'):

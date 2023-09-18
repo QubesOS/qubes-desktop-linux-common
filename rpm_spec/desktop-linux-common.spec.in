@@ -109,6 +109,8 @@ fi
 %{python3_sitelib}/qubesappmenusext/__init__.py
 
 /etc/qubes-rpc/qubes.SyncAppMenus
+/etc/qubes-rpc/qubes.UpdateAppMenusFor
+/etc/qubes-rpc/qubes.RemoveAppMenusFor
 /usr/share/qubes/icons/*.png
 /usr/bin/qvm-sync-appmenus
 /usr/bin/qvm-appmenus
