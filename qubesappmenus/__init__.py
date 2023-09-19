@@ -607,12 +607,13 @@ class Appmenus(object):
                 os.path.join(prefix_dir, source_whitelist_filename))):
             vm.log.info("Creating default whitelisted apps list: {0}".
                         format(prefix_dir + '/' + AppmenusSubdirs.whitelist))
-            if 'default-menu-items' in src.features:
-                vm.features['menu-items'] = \
-                    src.features['default-menu-items']
-            else:
-                self.set_whitelist(vm, retrieve_list(os.path.join(
-                    prefix_dir, source_whitelist_filename)))
+            if 'menu-items' not in vm.features:
+                if 'default-menu-items' in src.features:
+                    vm.features['menu-items'] = \
+                        src.features['default-menu-items']
+                else:
+                    self.set_whitelist(vm, retrieve_list(os.path.join(
+                        prefix_dir, source_whitelist_filename)))
 
         # NOTE: No need to copy whitelists from VM features as that is
         # automatically done with clones
