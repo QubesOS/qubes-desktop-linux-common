@@ -1,3 +1,13 @@
+qubes-desktop-linux-common (4.2.4-1) unstable; urgency=medium
+
+  * appmenus: Call qvm-appmenus on menu-items feature change too
+  * appmenus: Call qvm-appmenus via qrexec service
+  * appmenus: queue menu updates when GUI VM is not running
+  * appmenus: update appmenus on changing GUI VM
+  * appmenus: do not override cloned menu-items with the default one
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Tue, 10 Oct 2023 00:23:04 +0200
+
 qubes-desktop-linux-common (4.2.3-1) unstable; urgency=medium
 
   [ Demi Marie Obenour ]
