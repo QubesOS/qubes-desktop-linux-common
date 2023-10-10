@@ -8,7 +8,7 @@ fi
 if [ $(id -u) -eq 0 ]; then
     user=$(getent group qubes|cut -d: -f4|cut -d, -f1)
     if [ -n "$user" ]; then
-        exec /usr/sbin/runuser -u "$user" env DISPLAY=:0 /usr/bin/qvm-appmenus --remove --quiet -- "$1"
+        exec /usr/sbin/runuser -u "$user" -- env DISPLAY=:0 /usr/bin/qvm-appmenus --remove --quiet -- "$1"
     fi
 else
     /usr/bin/qvm-appmenus --remove --quiet -- "$1"
