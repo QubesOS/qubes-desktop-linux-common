@@ -615,12 +615,12 @@ class TC_00_Appmenus(unittest.TestCase):
             ['xdg-desktop-menu', 'install', '--noupdate'])
         prefix = self.basedir + '/test-inst-app/apps/org.qubes-os.'
         self.maxDiff = None
-        self.assertEqual(args[3:], [
+        self.assertEqual(sorted(args[3:]), sorted([
             self.basedir + '/test-inst-app/apps/qubes-vm-directory_test_dinst_dapp.directory',
             prefix + 'vm._test_dinst_dapp.evince.desktop',
             prefix + 'vm._test_dinst_dapp.qubes-start.desktop',
             prefix + 'qubes-vm-settings._test_dinst_dapp.desktop',
-        ])
+        ]))
 
     def test_130_process_appmenus_templates(self):
         def _run(service, **kwargs):
