@@ -178,6 +178,5 @@ class AppmenusExtension(qubes.ext.Extension):
             del vm.features['menu-update-pending-for']
 
     @qubes.ext.handler('template-postinstall')
-    def on_template_postinstall(self, vm, event):
-        asyncio.ensure_future(self.run_as_user(
-            ['qvm-sync-appmenus', vm.name]))
+    async def on_template_postinstall(self, vm, event):
+        await self.run_as_user(['qvm-sync-appmenus', vm.name])
