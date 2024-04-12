@@ -17,11 +17,12 @@
 #
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, see <http://www.gnu.org/licenses/>.
-
+import contextlib
 import subprocess
 import grp
 import logging
 import asyncio
+from collections import defaultdict
 
 import qubes.ext
 from qubes.utils import sanitize_stderr_for_log
@@ -31,6 +32,7 @@ class AppmenusExtension(qubes.ext.Extension):
     def __init__(self, *args):
         super(AppmenusExtension, self).__init__(*args)
         self.log = logging.getLogger('appmenus')
+        self.vm_tasks = defaultdict(list)
 
     async def run_as_user(self, command):
         """
@@ -117,47 +119,96 @@ class AppmenusExtension(qubes.ext.Extension):
             ['qvm-appmenus', '--quiet', '--init', '--create', '--source=' + src.name,
             vm.name])
 
+    async def collect_pending_tasks(self, vm):
+        """Wait for any pending tasks to complete"""
+        tasks = self.vm_tasks[vm.name]
+        if not tasks:
+            return
+        await asyncio.gather(*tasks, return_exceptions=True)
+        with contextlib.suppress(KeyError):
+            del self.vm_tasks[vm.name]
+
+    def collect_done_tasks(self, vm):
+        """Collect only done tasks, no async code"""
+        if vm.name not in self.vm_tasks:
+            return
+        tasks = self.vm_tasks[vm.name]
+        new_tasks = []
+        for task in list(tasks):
+            if task.done():
+                try:
+                    task.result()
+                except Exception as e:  # pylint: disable=broad-except
+                    vm.log.warning("Appmenu operation failed for '%s': %s",
+                        vm.name, str(e))
+            else:
+                new_tasks.append(task)
+        if new_tasks:
+            self.vm_tasks[vm.name] = new_tasks
+        else:
+            del self.vm_tasks[vm.name]
+
     @qubes.ext.handler('domain-remove-from-disk')
     async def remove_from_disk(self, vm, event):
+        # wait for any pending appmenu operations to complete
+        # before removing appmenus
+        await self.collect_pending_tasks(vm)
         await self.remove_appmenus(vm.name, vm.guivm)
 
     @qubes.ext.handler('property-set:label')
     def label_setter(self, vm, event, **kwargs):
-        asyncio.ensure_future(self.update_appmenus(vm))
+        self.collect_done_tasks(vm)
+        self.vm_tasks[vm.name].append(
+            asyncio.ensure_future(self.update_appmenus(vm)))
 
     @qubes.ext.handler('property-set:provides_network')
     def provides_network_setter(self, vm, event, **kwargs):
-        asyncio.ensure_future(self.update_appmenus(vm))
+        self.collect_done_tasks(vm)
+        self.vm_tasks[vm.name].append(
+            asyncio.ensure_future(self.update_appmenus(vm)))
 
     @qubes.ext.handler('property-set:guivm')
     def provides_network_setter(self, vm, event, name, newvalue, oldvalue=None):
+        self.collect_done_tasks(vm)
         if oldvalue and oldvalue != newvalue:
-            asyncio.ensure_future(self.remove_appmenus(vm.name, oldvalue))
-        asyncio.ensure_future(self.update_appmenus(vm))
+            self.vm_tasks[vm.name].append(
+                asyncio.ensure_future(self.remove_appmenus(vm.name, oldvalue)))
+        self.vm_tasks[vm.name].append(
+            asyncio.ensure_future(self.update_appmenus(vm)))
 
     @qubes.ext.handler('domain-feature-delete:appmenus-dispvm')
     def on_feature_del_appmenus_dispvm(self, vm, event, feature):
-        asyncio.ensure_future(self.update_appmenus(vm))
+        self.collect_done_tasks(vm)
+        self.vm_tasks[vm.name].append(
+            asyncio.ensure_future(self.update_appmenus(vm)))
 
     @qubes.ext.handler('domain-feature-set:appmenus-dispvm')
     def on_feature_set_appmenus_dispvm(self, vm, event, feature,
             value, oldvalue=None):
-        asyncio.ensure_future(self.update_appmenus(vm))
+        self.collect_done_tasks(vm)
+        self.vm_tasks[vm.name].append(
+            asyncio.ensure_future(self.update_appmenus(vm)))
 
     @qubes.ext.handler('domain-feature-set:menu-items')
     def on_feature_set_appmenus_dispvm(self, vm, event, feature,
             value, oldvalue=None):
-        asyncio.ensure_future(self.update_appmenus(vm))
+        self.collect_done_tasks(vm)
+        self.vm_tasks[vm.name].append(
+            asyncio.ensure_future(self.update_appmenus(vm)))
 
     @qubes.ext.handler('domain-feature-delete:internal')
     def on_feature_del_internal(self, vm, event, feature):
-        asyncio.ensure_future(self.update_appmenus(vm))
+        self.collect_done_tasks(vm)
+        self.vm_tasks[vm.name].append(
+            asyncio.ensure_future(self.update_appmenus(vm)))
 
     @qubes.ext.handler('domain-feature-set:internal')
     def on_feature_set_internal(self, vm, event, feature, value,
             oldvalue=None):
+        self.collect_done_tasks(vm)
         if value:
-            asyncio.ensure_future(self.remove_appmenus(vm.name, vm.guivm))
+            self.vm_tasks[vm.name].append(
+                asyncio.ensure_future(self.remove_appmenus(vm.name, vm.guivm)))
 
     @qubes.ext.handler('domains-start')
     async def on_domain_start(self, vm, event, **kwargs):
@@ -176,6 +227,16 @@ class AppmenusExtension(qubes.ext.Extension):
                     continue
                 await self.update_appmenus(vm.app.domains[to_update])
             del vm.features['menu-update-pending-for']
+
+    @qubes.ext.handler('domain-shutdown')
+    async def on_domain_shutdown(self, vm, event, **kwargs):
+        """Collect any async tasks
+
+        Use this async handler to collect pending tasks, if any
+        """
+        await self.collect_pending_tasks(vm)
+        for vm in vm.app.domains:
+            self.collect_done_tasks(vm)
 
     @qubes.ext.handler('template-postinstall')
     async def on_template_postinstall(self, vm, event):
