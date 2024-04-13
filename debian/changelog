@@ -1,3 +1,10 @@
+qubes-desktop-linux-common (4.2.7-1) unstable; urgency=medium
+
+  * Convert on_template_postinstall to async function
+  * Collect background tasks results
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Sat, 13 Apr 2024 15:59:34 +0200
+
 qubes-desktop-linux-common (4.2.6-1) unstable; urgency=medium
 
   * tests: sort applications list before comparing
