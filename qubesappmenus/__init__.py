@@ -30,7 +30,7 @@ import shutil
 import logging
 
 import itertools
-import pkg_resources
+import importlib.resources
 import xdg.BaseDirectory
 
 import qubesadmin
@@ -345,11 +345,11 @@ class Appmenus(object):
         anything_changed = False
         directory_changed = False
         directory_file = self._directory_path(vm, dispvm=dispvm)
+        data = importlib.resources.files(__name__).joinpath(
+            self.directory_template_name(vm, dispvm)).read_text()
         if self.write_desktop_file(
                 vm,
-                pkg_resources.resource_string(
-                    __name__,
-                    self.directory_template_name(vm, dispvm)).decode(),
+                data,
                 directory_file,
                 dispvm):
             anything_changed = True
@@ -384,12 +384,11 @@ class Appmenus(object):
         if not dispvm:
             vm_settings_fname = os.path.join(
                 appmenus_dir, self.settings_name(vm))
+            data = importlib.resources.files(__name__).joinpath(
+                'qubes-vm-settings.desktop.template').read_text()
             if self.write_desktop_file(
                     vm,
-                    pkg_resources.resource_string(
-                        __name__,
-                        'qubes-vm-settings.desktop.template'
-                    ).decode(),
+                    data,
                     vm_settings_fname):
                 changed_appmenus.append(vm_settings_fname)
             target_appmenus.append(os.path.basename(vm_settings_fname))
@@ -598,9 +597,9 @@ class Appmenus(object):
             with open(
                     os.path.join(own_templates_dir, 'qubes-start.desktop'),
                     'wb') as qubes_start_f:
-                qubes_start_f.write(pkg_resources.resource_string(
-                    __name__,
-                    'qubes-start.desktop.template'))
+                data = importlib.resources.files(__name__).joinpath(
+                    'qubes-start.desktop.template').read_bytes()
+                qubes_start_f.write(data)
 
         source_whitelist_filename = 'vm-' + AppmenusSubdirs.whitelist
         if src and ('default-menu-items' in src.features or os.path.exists(

@@ -31,7 +31,7 @@ import unittest
 import unittest.mock
 
 import logging
-import pkg_resources
+import importlib.resources
 import qubesappmenus
 import qubesappmenus.receive
 
@@ -247,16 +247,19 @@ class TC_00_Appmenus(unittest.TestCase):
         self.ext.appmenus_init(appvm)
         with open(os.path.join(self.ext.templates_dirs(tpl)[0],
                 'evince.desktop'), 'wb') as f:
-            f.write(pkg_resources.resource_string(__name__,
-                'test-data/evince.desktop.template'))
+            f.write(importlib.resources.files(
+                anchor=__name__).joinpath(
+                'test-data/evince.desktop.template').read_bytes())
         self.ext.appmenus_create(appvm, refresh_cache=False)
         self.ext.appicons_create(appvm)
         evince_path = self._make_desktop_name(appvm, 'evince.desktop')
         self.assertPathExists(evince_path)
         with open(evince_path, 'rb') as f:
+            new_file_bytes = importlib.resources.files(
+                anchor=__name__).joinpath(
+                'test-data/evince.desktop').read_bytes()
             self.assertEqual(
-                pkg_resources.resource_string(__name__,
-                    'test-data/evince.desktop').replace(b'%BASEDIR%',
+                new_file_bytes.replace(b'%BASEDIR%',
                     qubesappmenus.basedir.encode()),
                 f.read()
             )
@@ -279,27 +282,34 @@ class TC_00_Appmenus(unittest.TestCase):
         self.ext.appmenus_init(appvm)
         with open(os.path.join(self.ext.templates_dirs(tpl)[0],
                 'evince.desktop'), 'wb') as f:
-            f.write(pkg_resources.resource_string(__name__,
-                'test-data/evince.desktop.template'))
+            evince_data = importlib.resources.files(
+                anchor=__name__).joinpath(
+                'test-data/evince.desktop.template').read_bytes()
+            f.write(evince_data)
         self.ext.appmenus_create(appvm, refresh_cache=False)
         self.ext.appicons_create(appvm)
 
         with open(os.path.join(self.ext.templates_dirs(tpl)[0],
                 'xterm.desktop'), 'wb') as f:
-            f.write(pkg_resources.resource_string(__name__,
-                'test-data/xterm.desktop.template'))
+            xterm_data = importlib.resources.files(
+                anchor=__name__).joinpath(
+                'test-data/xterm.desktop.template').read_bytes()
+            f.write(xterm_data)
         with open(os.path.join(self.ext.templates_dirs(tpl)[0],
                 'evince.desktop'), 'wb') as f:
-            f.write(pkg_resources.resource_string(__name__,
-                'test-data/evince.desktop.template').
-                replace(b'Document Viewer', b'Random Viewer'))
+            evince_data = importlib.resources.files(
+                anchor=__name__).joinpath(
+                'test-data/evince.desktop.template').read_bytes()
+            f.write(evince_data.replace(b'Document Viewer', b'Random Viewer'))
         self.ext.appmenus_update(appvm)
         evince_path = self._make_desktop_name(appvm, 'evince.desktop')
         self.assertPathExists(evince_path)
         with open(evince_path, 'rb') as f:
+            evince_data = importlib.resources.files(
+                anchor=__name__).joinpath(
+                'test-data/evince.desktop').read_bytes()
             self.assertEqual(
-                pkg_resources.resource_string(__name__,
-                    'test-data/evince.desktop')
+                evince_data
                     .replace(b'%BASEDIR%', qubesappmenus.basedir.encode())
                     .replace(b'Document Viewer', b'Random Viewer'),
                 f.read()
@@ -308,9 +318,10 @@ class TC_00_Appmenus(unittest.TestCase):
         xterm_path = self._make_desktop_name(appvm, 'xterm.desktop')
         self.assertPathExists(xterm_path)
         with open(xterm_path, 'rb') as f:
-            self.assertEqual(
-                pkg_resources.resource_string(__name__,
-                    'test-data/xterm.desktop')
+            xterm_data = importlib.resources.files(
+                anchor=__name__).joinpath(
+                'test-data/xterm.desktop').read_bytes()
+            self.assertEqual(xterm_data
                     .replace(b'%BASEDIR%', qubesappmenus.basedir.encode()),
                 f.read()
             )
@@ -335,8 +346,10 @@ class TC_00_Appmenus(unittest.TestCase):
         self.ext.appmenus_init(appvm)
         with open(os.path.join(self.ext.templates_dirs(tpl)[0],
                 'evince.desktop'), 'wb') as f:
-            f.write(pkg_resources.resource_string(__name__,
-                'test-data/evince.desktop.template'))
+            evince_data = importlib.resources.files(
+                anchor=__name__).joinpath(
+                'test-data/evince.desktop.template').read_bytes()
+            f.write(evince_data)
         self.ext.appmenus_create(appvm, refresh_cache=False)
         self.ext.appicons_create(appvm)
         appmenus_dir = self.ext.appmenus_dir(appvm)
@@ -386,8 +399,8 @@ class TC_00_Appmenus(unittest.TestCase):
                 pass
             self.assertEqual(service, 'qubes.GetAppmenus')
             p = PopenMockup()
-            p.stdout = pkg_resources.resource_stream(__name__,
-                'test-data/appmenus.input')
+            p.stdout = importlib.resources.files(
+                anchor=__name__).joinpath('test-data/appmenus.input').open(mode='rb')
             p.wait = lambda: None
             p.returncode = 0
             return p
@@ -509,8 +522,10 @@ class TC_00_Appmenus(unittest.TestCase):
         old_path = os.path.join(self.ext.templates_dirs(tpl)[0],
                                 'evince.desktop')
         with open(old_path, 'wb') as f:
-            f.write(pkg_resources.resource_string(__name__,
-                'test-data/evince.desktop.template'))
+            evince_data = importlib.resources.files(
+                anchor=__name__).joinpath(
+                'test-data/evince.desktop.template').read_bytes()
+            f.write(evince_data)
         appvm = TestVM('test-inst-app',
             klass='AppVM',
             template=tpl,
@@ -536,10 +551,12 @@ class TC_00_Appmenus(unittest.TestCase):
         evince_path = self._make_desktop_name(appvm, 'evince.desktop')
         self.assertPathExists(evince_path)
         with open(evince_path, 'rb') as f:
+            evince_data = importlib.resources.files(
+                anchor=__name__).joinpath(
+                'test-data/evince.desktop').read_bytes()
             self.assertEqual(
-                pkg_resources.resource_string(__name__,
-                    'test-data/evince.desktop').replace(b'%BASEDIR%',
-                    qubesappmenus.basedir.encode()),
+                evince_data.replace(b'%BASEDIR%',
+                                    qubesappmenus.basedir.encode()),
                 f.read()
             )
 
@@ -583,8 +600,10 @@ class TC_00_Appmenus(unittest.TestCase):
         self.ext.appmenus_init(tpl)
         with open(os.path.join(self.ext.templates_dirs(tpl)[0],
                 'evince.desktop'), 'wb') as f:
-            f.write(pkg_resources.resource_string(__name__,
-                'test-data/evince.desktop.template'))
+            evince_data = importlib.resources.files(
+                anchor=__name__).joinpath(
+                'test-data/evince.desktop.template').read_bytes()
+            f.write(evince_data)
         with open(os.path.join(self.basedir,
                                tpl.name,
                                'vm-whitelisted-appmenus.list'), 'wb') as f:
@@ -601,10 +620,12 @@ class TC_00_Appmenus(unittest.TestCase):
         evince_path = self._make_desktop_name(appvm, 'evince.desktop')
         self.assertPathExists(evince_path)
         with open(evince_path, 'rb') as f:
+            evince_data = importlib.resources.files(
+                anchor=__name__).joinpath(
+                'test-data/evince.desktop').read_bytes()
             self.assertEqual(
-                pkg_resources.resource_string(__name__,
-                    'test-data/evince.desktop').replace(b'%BASEDIR%',
-                    qubesappmenus.basedir.encode()),
+                evince_data.replace(b'%BASEDIR%',
+                                    qubesappmenus.basedir.encode()),
                 f.read()
             )
 
@@ -666,9 +687,11 @@ class TC_00_Appmenus(unittest.TestCase):
             'evince.desktop')
         self.assertPathExists(evince_path)
         with open(evince_path, 'rb') as f:
+            evince_data = importlib.resources.files(
+                anchor=__name__).joinpath(
+                'test-data/evince.desktop.template').read_bytes()
             self.assertEqual(
-                pkg_resources.resource_string(__name__,
-                    'test-data/evince.desktop.template'),
+                evince_data,
                 f.read()
             )
         self.assertCountEqual(self.appvm.log.mock_calls, [
