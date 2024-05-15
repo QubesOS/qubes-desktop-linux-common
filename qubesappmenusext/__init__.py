@@ -157,18 +157,24 @@ class AppmenusExtension(qubes.ext.Extension):
 
     @qubes.ext.handler('property-set:label')
     def label_setter(self, vm, event, **kwargs):
+        if vm.app.vmm.offline_mode:
+            return
         self.collect_done_tasks(vm)
         self.vm_tasks[vm.name].append(
             asyncio.ensure_future(self.update_appmenus(vm)))
 
     @qubes.ext.handler('property-set:provides_network')
     def provides_network_setter(self, vm, event, **kwargs):
+        if vm.app.vmm.offline_mode:
+            return
         self.collect_done_tasks(vm)
         self.vm_tasks[vm.name].append(
             asyncio.ensure_future(self.update_appmenus(vm)))
 
     @qubes.ext.handler('property-set:guivm')
     def provides_network_setter(self, vm, event, name, newvalue, oldvalue=None):
+        if vm.app.vmm.offline_mode:
+            return
         self.collect_done_tasks(vm)
         if oldvalue and oldvalue != newvalue:
             self.vm_tasks[vm.name].append(
@@ -178,6 +184,8 @@ class AppmenusExtension(qubes.ext.Extension):
 
     @qubes.ext.handler('domain-feature-delete:appmenus-dispvm')
     def on_feature_del_appmenus_dispvm(self, vm, event, feature):
+        if vm.app.vmm.offline_mode:
+            return
         self.collect_done_tasks(vm)
         self.vm_tasks[vm.name].append(
             asyncio.ensure_future(self.update_appmenus(vm)))
@@ -185,6 +193,8 @@ class AppmenusExtension(qubes.ext.Extension):
     @qubes.ext.handler('domain-feature-set:appmenus-dispvm')
     def on_feature_set_appmenus_dispvm(self, vm, event, feature,
             value, oldvalue=None):
+        if vm.app.vmm.offline_mode:
+            return
         self.collect_done_tasks(vm)
         self.vm_tasks[vm.name].append(
             asyncio.ensure_future(self.update_appmenus(vm)))
@@ -192,12 +202,16 @@ class AppmenusExtension(qubes.ext.Extension):
     @qubes.ext.handler('domain-feature-set:menu-items')
     def on_feature_set_appmenus_dispvm(self, vm, event, feature,
             value, oldvalue=None):
+        if vm.app.vmm.offline_mode:
+            return
         self.collect_done_tasks(vm)
         self.vm_tasks[vm.name].append(
             asyncio.ensure_future(self.update_appmenus(vm)))
 
     @qubes.ext.handler('domain-feature-delete:internal')
     def on_feature_del_internal(self, vm, event, feature):
+        if vm.app.vmm.offline_mode:
+            return
         self.collect_done_tasks(vm)
         self.vm_tasks[vm.name].append(
             asyncio.ensure_future(self.update_appmenus(vm)))
@@ -205,6 +219,8 @@ class AppmenusExtension(qubes.ext.Extension):
     @qubes.ext.handler('domain-feature-set:internal')
     def on_feature_set_internal(self, vm, event, feature, value,
             oldvalue=None):
+        if vm.app.vmm.offline_mode:
+            return
         self.collect_done_tasks(vm)
         if value:
             self.vm_tasks[vm.name].append(
