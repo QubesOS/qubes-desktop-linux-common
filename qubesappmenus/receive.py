@@ -27,7 +27,7 @@ import re
 import os
 import sys
 import shlex
-import pkg_resources
+import importlib.resources
 import qubesimgconverter
 
 import qubesadmin.exc
@@ -305,9 +305,10 @@ def process_appmenus_templates(appmenusext, vm, appmenus):
         if not os.path.exists(qubes_start_fname):
             with open(qubes_start_fname, 'wb') as qubes_start_f:
                 vm.log.info("Creating Start")
-                qubes_start_f.write(pkg_resources.resource_string(
-                    __name__,
-                    'qubes-start.desktop.template'))
+                template_data = importlib.resources.files(
+                    __name__).joinpath(
+                    'qubes-start.desktop.template').read_bytes()
+                qubes_start_f.write(template_data)
 
     # Do not create reserved Start entry
     appmenus.pop('qubes-start', None)
