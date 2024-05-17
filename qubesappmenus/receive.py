@@ -393,6 +393,8 @@ def main(args=None):
         vm = args.app.domains[env_vmname]
     elif not args.domains:
         parser.error("You must specify at least the VM name!")
+        # pylint doesn't know parser.error doesn't return
+        assert False
     else:
         vm = args.domains[0]
 
