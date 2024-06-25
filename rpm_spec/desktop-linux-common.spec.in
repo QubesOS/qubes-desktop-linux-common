@@ -112,6 +112,7 @@ fi
 /etc/qubes-rpc/qubes.UpdateAppMenusFor
 /etc/qubes-rpc/qubes.RemoveAppMenusFor
 /usr/share/qubes/icons/*.png
+/usr/share/icons/hicolor/scalable/apps/qubes-vm-settings.svg
 /usr/bin/qvm-sync-appmenus
 /usr/bin/qvm-appmenus
 

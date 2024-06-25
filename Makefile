@@ -13,6 +13,9 @@ install:
 	for icon in icons/*.png; do \
 		gm convert -resize 48 $$icon $(DESTDIR)/usr/share/qubes/$$icon; \
 	done
+	mkdir -p $(DESTDIR)/usr/share/icons/hicolor/scalable/apps
+	cp icons/*.svg $(DESTDIR)/usr/share/icons/hicolor/scalable/apps/
+
 	### Appmenus
 	# force /usr/bin before /bin to have /usr/bin/python instead of /bin/python
 	PATH="/usr/bin:$$PATH" $(PYTHON) setup.py install $(PYTHON_PREFIX_ARG) -O1 --skip-build --root $(DESTDIR)

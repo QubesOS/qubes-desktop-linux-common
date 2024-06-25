@@ -2,6 +2,7 @@ usr/bin/qvm-appmenus
 usr/bin/qvm-xkill
 usr/bin/qvm-sync-appmenus
 usr/share/qubes/icons/*.png
+usr/share/icons/hicolor/scalable/apps/qubes-vm-settings.svg
 usr/lib/python3/dist-packages/qubesappmenus/*
 usr/lib/python3/dist-packages/qubesdesktop-*.egg-info/*
 usr/lib/python3/dist-packages/qubesappmenusext/*
