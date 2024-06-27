@@ -126,3 +126,6 @@ fi
 %dir %{_sysconfdir}/xdg/menus/settings-merged
 %config %{_sysconfdir}/xdg/menus/*.menu
 %{_datadir}/desktop-directories/*.directory
+
+%changelog
+@CHAGELOG@
