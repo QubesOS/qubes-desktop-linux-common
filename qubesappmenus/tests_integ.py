@@ -102,7 +102,7 @@ class TC_10_AppmenusIntegration(qubes.tests.extra.ExtraTestCase):
         assert all(x.startswith(prefix) for x in appmenus)
         appmenus = [x[len(prefix):] for x in appmenus]
         assert all(x.endswith('.desktop') for x in appmenus)
-        self.assertEquals(set(whitelisted), set(appmenus))
+        self.assertEqual(set(whitelisted), set(appmenus))
         self.assertPathExists(self.appmenus.icons_dir(vm))
         appicons = os.listdir(self.appmenus.icons_dir(vm))
         whitelisted_icons = set()
@@ -114,7 +114,7 @@ class TC_10_AppmenusIntegration(qubes.tests.extra.ExtraTestCase):
                               appmenu))))
             if desktop.getIcon():
                 whitelisted_icons.add(os.path.basename(desktop.getIcon()))
-        self.assertEquals(set(whitelisted_icons), set(appicons))
+        self.assertEqual(set(whitelisted_icons), set(appicons))
 
     def test_001_created_registered(self):
         """Check whether appmenus was registered in desktop environment"""
