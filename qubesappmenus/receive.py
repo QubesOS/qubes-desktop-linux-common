@@ -306,7 +306,7 @@ def process_appmenus_templates(appmenusext, vm, appmenus):
             with open(qubes_start_fname, 'wb') as qubes_start_f:
                 vm.log.info("Creating Start")
                 template_data = importlib.resources.files(
-                    __name__).joinpath(
+                    __package__).joinpath(
                     'qubes-start.desktop.template').read_bytes()
                 qubes_start_f.write(template_data)
 

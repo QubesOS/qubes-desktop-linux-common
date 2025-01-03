@@ -248,7 +248,7 @@ class TC_00_Appmenus(unittest.TestCase):
         with open(os.path.join(self.ext.templates_dirs(tpl)[0],
                 'evince.desktop'), 'wb') as f:
             f.write(importlib.resources.files(
-                anchor=__name__).joinpath(
+                __package__).joinpath(
                 'test-data/evince.desktop.template').read_bytes())
         self.ext.appmenus_create(appvm, refresh_cache=False)
         self.ext.appicons_create(appvm)
@@ -256,7 +256,7 @@ class TC_00_Appmenus(unittest.TestCase):
         self.assertPathExists(evince_path)
         with open(evince_path, 'rb') as f:
             new_file_bytes = importlib.resources.files(
-                anchor=__name__).joinpath(
+                __package__).joinpath(
                 'test-data/evince.desktop').read_bytes()
             self.assertEqual(
                 new_file_bytes.replace(b'%BASEDIR%',
@@ -283,7 +283,7 @@ class TC_00_Appmenus(unittest.TestCase):
         with open(os.path.join(self.ext.templates_dirs(tpl)[0],
                 'evince.desktop'), 'wb') as f:
             evince_data = importlib.resources.files(
-                anchor=__name__).joinpath(
+                __package__).joinpath(
                 'test-data/evince.desktop.template').read_bytes()
             f.write(evince_data)
         self.ext.appmenus_create(appvm, refresh_cache=False)
@@ -292,13 +292,13 @@ class TC_00_Appmenus(unittest.TestCase):
         with open(os.path.join(self.ext.templates_dirs(tpl)[0],
                 'xterm.desktop'), 'wb') as f:
             xterm_data = importlib.resources.files(
-                anchor=__name__).joinpath(
+                __package__).joinpath(
                 'test-data/xterm.desktop.template').read_bytes()
             f.write(xterm_data)
         with open(os.path.join(self.ext.templates_dirs(tpl)[0],
                 'evince.desktop'), 'wb') as f:
             evince_data = importlib.resources.files(
-                anchor=__name__).joinpath(
+                __package__).joinpath(
                 'test-data/evince.desktop.template').read_bytes()
             f.write(evince_data.replace(b'Document Viewer', b'Random Viewer'))
         self.ext.appmenus_update(appvm)
@@ -306,7 +306,7 @@ class TC_00_Appmenus(unittest.TestCase):
         self.assertPathExists(evince_path)
         with open(evince_path, 'rb') as f:
             evince_data = importlib.resources.files(
-                anchor=__name__).joinpath(
+                __package__).joinpath(
                 'test-data/evince.desktop').read_bytes()
             self.assertEqual(
                 evince_data
@@ -319,7 +319,7 @@ class TC_00_Appmenus(unittest.TestCase):
         self.assertPathExists(xterm_path)
         with open(xterm_path, 'rb') as f:
             xterm_data = importlib.resources.files(
-                anchor=__name__).joinpath(
+                __package__).joinpath(
                 'test-data/xterm.desktop').read_bytes()
             self.assertEqual(xterm_data
                     .replace(b'%BASEDIR%', qubesappmenus.basedir.encode()),
@@ -347,7 +347,7 @@ class TC_00_Appmenus(unittest.TestCase):
         with open(os.path.join(self.ext.templates_dirs(tpl)[0],
                 'evince.desktop'), 'wb') as f:
             evince_data = importlib.resources.files(
-                anchor=__name__).joinpath(
+                __package__).joinpath(
                 'test-data/evince.desktop.template').read_bytes()
             f.write(evince_data)
         self.ext.appmenus_create(appvm, refresh_cache=False)
@@ -400,7 +400,7 @@ class TC_00_Appmenus(unittest.TestCase):
             self.assertEqual(service, 'qubes.GetAppmenus')
             p = PopenMockup()
             p.stdout = importlib.resources.files(
-                anchor=__name__).joinpath('test-data/appmenus.input').open(mode='rb')
+                __package__).joinpath('test-data/appmenus.input').open(mode='rb')
             p.wait = lambda: None
             p.returncode = 0
             return p
@@ -523,7 +523,7 @@ class TC_00_Appmenus(unittest.TestCase):
                                 'evince.desktop')
         with open(old_path, 'wb') as f:
             evince_data = importlib.resources.files(
-                anchor=__name__).joinpath(
+                __package__).joinpath(
                 'test-data/evince.desktop.template').read_bytes()
             f.write(evince_data)
         appvm = TestVM('test-inst-app',
@@ -552,7 +552,7 @@ class TC_00_Appmenus(unittest.TestCase):
         self.assertPathExists(evince_path)
         with open(evince_path, 'rb') as f:
             evince_data = importlib.resources.files(
-                anchor=__name__).joinpath(
+                __package__).joinpath(
                 'test-data/evince.desktop').read_bytes()
             self.assertEqual(
                 evince_data.replace(b'%BASEDIR%',
@@ -601,7 +601,7 @@ class TC_00_Appmenus(unittest.TestCase):
         with open(os.path.join(self.ext.templates_dirs(tpl)[0],
                 'evince.desktop'), 'wb') as f:
             evince_data = importlib.resources.files(
-                anchor=__name__).joinpath(
+                __package__).joinpath(
                 'test-data/evince.desktop.template').read_bytes()
             f.write(evince_data)
         with open(os.path.join(self.basedir,
@@ -621,7 +621,7 @@ class TC_00_Appmenus(unittest.TestCase):
         self.assertPathExists(evince_path)
         with open(evince_path, 'rb') as f:
             evince_data = importlib.resources.files(
-                anchor=__name__).joinpath(
+                __package__).joinpath(
                 'test-data/evince.desktop').read_bytes()
             self.assertEqual(
                 evince_data.replace(b'%BASEDIR%',
@@ -688,7 +688,7 @@ class TC_00_Appmenus(unittest.TestCase):
         self.assertPathExists(evince_path)
         with open(evince_path, 'rb') as f:
             evince_data = importlib.resources.files(
-                anchor=__name__).joinpath(
+                __package__).joinpath(
                 'test-data/evince.desktop.template').read_bytes()
             self.assertEqual(
                 evince_data,

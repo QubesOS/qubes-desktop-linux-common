@@ -345,7 +345,7 @@ class Appmenus(object):
         anything_changed = False
         directory_changed = False
         directory_file = self._directory_path(vm, dispvm=dispvm)
-        data = importlib.resources.files(__name__).joinpath(
+        data = importlib.resources.files(__package__).joinpath(
             self.directory_template_name(vm, dispvm)).read_text()
         if self.write_desktop_file(
                 vm,
@@ -384,7 +384,7 @@ class Appmenus(object):
         if not dispvm:
             vm_settings_fname = os.path.join(
                 appmenus_dir, self.settings_name(vm))
-            data = importlib.resources.files(__name__).joinpath(
+            data = importlib.resources.files(__package__).joinpath(
                 'qubes-vm-settings.desktop.template').read_text()
             if self.write_desktop_file(
                     vm,
@@ -597,7 +597,7 @@ class Appmenus(object):
             with open(
                     os.path.join(own_templates_dir, 'qubes-start.desktop'),
                     'wb') as qubes_start_f:
-                data = importlib.resources.files(__name__).joinpath(
+                data = importlib.resources.files(__package__).joinpath(
                     'qubes-start.desktop.template').read_bytes()
                 qubes_start_f.write(data)
 
