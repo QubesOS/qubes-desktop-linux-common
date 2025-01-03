@@ -324,7 +324,7 @@ class Appmenus(object):
             self._appmenus_create_onedir(
                 vm, force=force, refresh_cache=refresh_cache, dispvm=True)
 
-    def _appmenus_create_onedir(self, vm, force=False, refresh_cache=True,
+    def _appmenus_create_onedir(self, vm, *, force=False, refresh_cache=True,
                                 dispvm=False, keep_dispvm=False):
         """Create/update .desktop files
 
