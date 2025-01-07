@@ -1,3 +1,12 @@
+qubes-desktop-linux-common (4.2.13-1) unstable; urgency=medium
+
+  [ Marta Marczykowska-Górecka ]
+  * Remove deprecated pkg_resources, replace with importlib
+  * Backwards compatibility for importlib
+  * Fix pylint complaint
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Tue, 07 Jan 2025 03:15:59 +0100
+
 qubes-desktop-linux-common (4.2.12-1) unstable; urgency=medium
 
   * tests: assertEquals -> assertEqual
