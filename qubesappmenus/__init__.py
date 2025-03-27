@@ -828,7 +828,10 @@ def main(args=None, app=None):
         # for other actions - get VM object
         if not args.remove:
             if not isinstance(vm, qubesadmin.vm.QubesVM):
-                vm = args.app.domains[vm]
+                try:
+                    vm = args.app.domains[vm]
+                except KeyError:
+                    parser.error('VMNAME is not an existing qube')
             if args.init:
                 appmenus.appmenus_init(vm, src=args.source)
             if args.get_whitelist:
