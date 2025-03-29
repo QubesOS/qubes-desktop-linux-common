@@ -831,7 +831,7 @@ def main(args=None, app=None):
                 try:
                     vm = args.app.domains[vm]
                 except KeyError:
-                    parser.error('VMNAME is not an existing qube')
+                    parser.error("'{0}' is not an existing qube".format(vm))
             if args.init:
                 appmenus.appmenus_init(vm, src=args.source)
             if args.get_whitelist:
