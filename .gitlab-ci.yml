@@ -6,6 +6,7 @@ checks:tests:
   - pip3 install --quiet -r ci/requirements.txt
   - git clone https://github.com/QubesOS/qubes-linux-utils ~/linux-utils
   - git clone https://github.com/QubesOS/qubes-core-admin-client ~/core-admin-client
+  - (cd ~/core-admin-client;python3 setup.py egg_info)
   script:
   - export PYTHONPATH=~/core-admin-client:~/linux-utils/imgconverter
   - python3 -m pylint qubesappmenus
