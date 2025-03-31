@@ -404,7 +404,11 @@ def main(args=None):
         use_stdin = True
     appmenusext = qubesappmenus.Appmenus()
     if not args.regenerate_only:
-        new_appmenus = retrieve_appmenus_templates(vm, use_stdin=use_stdin)
+        try:
+            new_appmenus = retrieve_appmenus_templates(vm, use_stdin=use_stdin)
+        except qubesadmin.exc.QubesVMNotRunningError as e:
+            parser.error(str(e))
+
         if not new_appmenus and vm.klass != "AppVM":
             vm.log.info("No appmenus received, terminating")
         else:
