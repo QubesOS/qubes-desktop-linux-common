@@ -1,3 +1,16 @@
+qubes-desktop-linux-common (4.2.14-1) unstable; urgency=medium
+
+  [ Marek Marczykowski-Górecki ]
+  * ci: remove R4.1, add R4.3
+  * ci: generate qubesadmin package metadata
+
+  [ parulin ]
+  * Fix bug #9836: error message when qube not running
+  * qvm-appmenus: Add error message when no VMNAME
+  * qvm-appmenus: Provide non-existing qube name in error message
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Thu, 26 Jun 2025 19:05:30 +0200
+
 qubes-desktop-linux-common (4.2.13-1) unstable; urgency=medium
 
   [ Marta Marczykowska-Górecka ]
