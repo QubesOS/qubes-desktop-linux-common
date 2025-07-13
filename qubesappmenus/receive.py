@@ -64,6 +64,7 @@ fields_regexp = {
     "Name": std_re,
     "GenericName": std_re,
     "Comment": std_re,
+    "StartupWMClass": re.compile(r"\A[a-zA-Z0-9/_.-]*\Z"),
     "Categories": re.compile(r"\A[a-zA-Z0-9/.;:'() -]*\Z"),
     "Exec": re.compile(r"\A[a-zA-Z0-9()_&>/{}:.= -]*\Z"),
     "Icon": re.compile(r"\A[a-zA-Z0-9/_.-]*\Z"),
@@ -242,6 +243,11 @@ def create_template(path, name, values, legacy):
     for key in ["Name", "GenericName"]:
         if key in values:
             desktop_entry += "{0}=%VMNAME%: {1}\n".format(key, values[key])
+
+    if "StartupWMClass" in values:
+        desktop_entry += "StartupWMClass=%VMNAME%:{0}\n".format(
+            values["StartupWMClass"]
+        )
 
     # force category X-Qubes-VM
     values["Categories"] = values.get("Categories", "") + "X-Qubes-VM;"
