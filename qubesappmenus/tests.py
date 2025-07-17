@@ -440,6 +440,16 @@ class TC_00_Appmenus(unittest.TestCase):
                         '/usr/share/applications/evince.desktop',
                 'Icon': 'evince',
             },
+            'xterm': {
+                'Name': 'XTerm',
+                'GenericName': 'Terminal',
+                'Comment': 'standard terminal emulator for the X window system',
+                'Categories': 'System;TerminalEmulator;',
+                'Exec': 'qubes-desktop-run '
+                        '/usr/share/applications/xterm.desktop',
+                'Icon': 'xterm-color',
+                'StartupWMClass': 'XTerm',
+            },
         }
         self.assertEqual(expected_appmenus, appmenus)
 
@@ -451,6 +461,7 @@ class TC_00_Appmenus(unittest.TestCase):
             'Exec': 'qubes-desktop-run '
                     '/usr/share/applications/evince.desktop',
             'Icon': 'evince',
+            'StartupWMClass': 'Evince',
         }
         expected_template = (
             '[Desktop Entry]\n'
@@ -461,6 +472,7 @@ class TC_00_Appmenus(unittest.TestCase):
             'X-Qubes-AppName=evince\n'
             'Icon=%VMDIR%/apps.icons/evince.png\n'
             'Name=%VMNAME%: Document Viewer\n'
+            'StartupWMClass=%VMNAME%:Evince\n'
             'Comment=View multi-page documents\n'
             'Categories=GNOME;GTK;Office;Viewer;Graphics;2DGraphics'
             ';VectorGraphics;X-Qubes-VM;\n'

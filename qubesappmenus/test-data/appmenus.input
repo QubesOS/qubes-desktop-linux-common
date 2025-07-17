@@ -1015,3 +1015,16 @@
 /usr/share/applications/evince.desktop:X-GNOME-Bugzilla-Version=3.18.2
 /usr/share/applications/evince.desktop:Categories=GNOME;GTK;Office;Viewer;Graphics;2DGraphics;VectorGraphics;
 /usr/share/applications/evince.desktop:MimeType=application/pdf;application/x-bzpdf;application/x-gzpdf;application/x-xzpdf;application/x-ext-pdf;application/postscript;application/x-bzpostscript;application/x-gzpostscript;image/x-eps;image/x-bzeps;image/x-gzeps;application/x-ext-ps;application/x-ext-eps;application/x-dvi;application/x-bzdvi;application/x-gzdvi;application/x-ext-dvi;image/vnd.djvu;image/vnd.djvu+multipage;application/x-ext-djv;application/x-ext-djvu;image/tiff;application/x-cbr;application/x-cbz;application/x-cb7;application/x-cbt;application/x-ext-cbr;application/x-ext-cbz;application/x-ext-cb7;application/x-ext-cbt;application/oxps;application/vnd.ms-xpsdocument;
+
+/usr/share/applications/xterm.desktop:Name=XTerm
+/usr/share/applications/xterm.desktop:GenericName=Terminal
+/usr/share/applications/xterm.desktop:Comment=standard terminal emulator for the X window system
+/usr/share/applications/xterm.desktop:Exec=qubes-desktop-run /usr/share/applications/xterm.desktop
+/usr/share/applications/xterm.desktop:Terminal=false
+/usr/share/applications/xterm.desktop:Type=Application
+/usr/share/applications/xterm.desktop:Encoding=UTF-8
+/usr/share/applications/xterm.desktop:Icon=xterm-color
+/usr/share/applications/xterm.desktop:Categories=System;TerminalEmulator;
+/usr/share/applications/xterm.desktop:Keywords=shell;prompt;command;commandline;cmd;
+/usr/share/applications/xterm.desktop:StartupWMClass=XTerm
+/usr/share/applications/xterm.desktop:X-Desktop-File-Install-Version=0.27
