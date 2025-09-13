@@ -51,6 +51,13 @@ This package contains the XML files that describe the menu layout for
 GNOME and KDE, and the .desktop files that define the names and icons
 of "subdirectories" in the menus.
 
+%package wayland
+Summary: Configuration to enable Wayland session
+Group: User Interface/Desktops
+
+%description wayland
+This package enables experimental wayland session support.
+
 %prep
 %setup -q
 
@@ -61,6 +68,7 @@ make -C doc manpages PYTHON=%{__python3}
 %install
 make DESTDIR=$RPM_BUILD_ROOT MANDIR=%{_mandir} PYTHON=%{__python3} install
 make -C doc DESTDIR=$RPM_BUILD_ROOT MANDIR=%{_mandir} PYTHON=%{__python3} install
+make -C wayland-config DESTDIR=$RPM_BUILD_ROOT install
 
 %post
 for i in /usr/share/qubes/icons/*.png ; do
@@ -116,6 +124,9 @@ fi
 /usr/bin/qvm-sync-appmenus
 /usr/bin/qvm-appmenus
 
+/usr/lib/sddm/sddm.conf.d/10-qubes-wayland-off.conf
+/usr/share/lightdm/lightdm.conf.d/10-qubes-wayland-off.conf
+
 %files -n qubes-menus
 %defattr(-,root,root)
 %doc qubes-menus/README
@@ -126,6 +137,10 @@ fi
 %dir %{_sysconfdir}/xdg/menus/settings-merged
 %config %{_sysconfdir}/xdg/menus/*.menu
 %{_datadir}/desktop-directories/*.directory
+
+%files wayland
+/usr/lib/sddm/sddm.conf.d/15-qubes-wayland-on.conf
+/usr/share/lightdm/lightdm.conf.d/15-qubes-wayland-on.conf
 
 %changelog
 @CHANGELOG@
