@@ -1,3 +1,9 @@
+qubes-desktop-linux-common (4.3.0-1) unstable; urgency=medium
+
+  * Disable wayland session by default
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Wed, 17 Sep 2025 14:44:49 +0200
+
 qubes-desktop-linux-common (4.2.15-1) unstable; urgency=medium
 
   [ Marcus Ofenhed ]
