@@ -64,7 +64,7 @@ class AppmenusExtension(qubes.ext.Extension):
         if not guivm.is_running():
             self.log.warning("GUI VM for '%s' is not running, queueing menu update", vm.name)
             # please no async code between those two calls
-            current_queue = guivm.features.get('menu-update-pending-for', '').split(' ')
+            current_queue = guivm.features.get('menu-update-pending-for', '').split()
             if vm.name not in current_queue:
                 guivm.features['menu-update-pending-for'] = ' '.join(current_queue + [vm.name])
             return
@@ -90,7 +90,7 @@ class AppmenusExtension(qubes.ext.Extension):
         if not guivm.is_running():
             self.log.warning("GUI VM for '%s' is not running, queueing menu removal", vm_name)
             # please no async code between those two calls
-            current_queue = guivm.features.get('menu-remove-pending-for', '').split(' ')
+            current_queue = guivm.features.get('menu-remove-pending-for', '').split()
             if vm_name not in current_queue:
                 guivm.features['menu-remove-pending-for'] = ' '.join(current_queue + [vm_name])
             return
@@ -226,16 +226,18 @@ class AppmenusExtension(qubes.ext.Extension):
             self.vm_tasks[vm.name].append(
                 asyncio.ensure_future(self.remove_appmenus(vm.name, vm.guivm)))
 
-    @qubes.ext.handler('domains-start')
+    @qubes.ext.handler('domain-start')
     async def on_domain_start(self, vm, event, **kwargs):
         """Process queued menu updates"""
-        pending_update = vm.features.get('menu-update-pending-for', '').split(' ')
-        pending_remove = vm.features.get('menu-remove-pending-for', '').split(' ')
-        if pending_update or pending_remove:
-            vm.log.info("Processing pending menu updates")
+        pending_remove = vm.features.get('menu-remove-pending-for', '').split()
+        pending_update = vm.features.get('menu-update-pending-for', '').split()
+        if pending_remove:
+            vm.log.info("Processing pending menu removals")
             for to_remove in pending_remove:
                 await self.remove_appmenus(to_remove, guivm=vm)
-            del vm.features['menu-update-pending-for']
+            del vm.features['menu-remove-pending-for']
+        if pending_update:
+            vm.log.info("Processing pending menu updates")
             for to_update in pending_update:
                 if to_update not in vm.app.domains:
                     # removed in the meantime, and should be handled
