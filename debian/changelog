@@ -1,3 +1,10 @@
+qubes-desktop-linux-common (4.3.1-1) unstable; urgency=medium
+
+  [ Ben Grande ]
+  * Fix wrong event name
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Sat, 11 Oct 2025 01:05:55 +0200
+
 qubes-desktop-linux-common (4.3.0-1) unstable; urgency=medium
 
   * Disable wayland session by default
