@@ -726,6 +726,22 @@ class TC_00_Appmenus(unittest.TestCase):
         self.ext.set_default_whitelist(tpl, whitelist)
         self.assertEqual(whitelist, self.ext.get_default_whitelist(tpl))
 
+    @unittest.mock.patch('qubesappmenus.Appmenus')
+    def test_132_get_available_does_not_require_unstable_flag(
+            self, appmenus_cls):
+        vm = TestVM('test-inst-vm', klass='AppVM',
+            label=self.app.labels[1])
+        self.app.domains[vm.name] = vm
+        appmenus_cls.return_value.get_available.return_value = [
+            ('xterm.desktop', 'XTerm')]
+
+        with unittest.mock.patch('sys.stdout', new_callable=io.StringIO) \
+                as stdout:
+            qubesappmenus.main(['--get-available', vm.name], app=self.app)
+
+        appmenus_cls.return_value.get_available.assert_called_once_with(vm)
+        self.assertEqual(stdout.getvalue(), 'xterm.desktop - XTerm\n')
+
 
 def list_tests():
     return (TC_00_Appmenus,)

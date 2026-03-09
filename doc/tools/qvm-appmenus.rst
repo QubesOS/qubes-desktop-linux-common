@@ -48,12 +48,12 @@ OPTIONS
  --set-default-whitelist PATH
     Set the default list of applications to be included in the menus of VMs based on this template. Should only be used for TemplateVMs .The PATH can be either a path to file containing a list of .desktop files, or a single hyphen ('-') to read from standard input.
 
---get-available [EXPERIMENTAL] [REQUIRES --i-understand-format-is-unstable]
-    List all available applications for the VM. The current format is UNSTABLE.
+--get-available
+    List all available applications for the VM.
     The applications are listed as hyphen-separated pairs consisting of file name and application name.
 
 --file-field FIELDNAME
-    .desktop file field to append to output for --get-available; can be used multiple times for multiple fields. This option changes output format to pipe-("|") separated. The current format is UNSTABLE.
+    .desktop file field to append to output for --get-available; can be used multiple times for multiple fields. This option changes output format to pipe-("|") separated.
 
 AUTHORS
 =======
