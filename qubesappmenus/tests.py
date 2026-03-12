@@ -737,7 +737,8 @@ class TC_00_Appmenus(unittest.TestCase):
 
         with unittest.mock.patch('sys.stdout', new_callable=io.StringIO) \
                 as stdout:
-            qubesappmenus.main(['--get-available', vm.name], app=self.app)
+            qubesappmenus.main(
+                ['--force-root', '--get-available', vm.name], app=self.app)
 
         appmenus_cls.return_value.get_available.assert_called_once_with(vm)
         self.assertEqual(stdout.getvalue(), 'xterm.desktop - XTerm\n')
