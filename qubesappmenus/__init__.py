@@ -761,7 +761,7 @@ parser.add_argument(
 parser.add_argument(
     '--i-understand-format-is-unstable', dest='fool',
     action='store_true',
-    help='required pledge for --get-available')
+    help='deprecated no-op for backward compatibility')
 parser.add_argument(
     '--file-field', action='append', dest='fields',
     help='File field to append to output for --get-available; can be used'
@@ -795,6 +795,9 @@ def retrieve_list(path):
 def main(args=None, app=None):
     """main function for qvm-appmenus tool"""
     args = parser.parse_args(args=args, app=app)
+    if args.fool:
+        print('Warning: --i-understand-format-is-unstable is deprecated '
+              'and has no effect.', file=sys.stderr)
     if not args.all_domains and not args.domains:
         parser.error("one of the arguments --all VMNAME is required")
     appmenus = Appmenus()
@@ -852,10 +855,6 @@ def main(args=None, app=None):
             if args.update:
                 appmenus.appmenus_update(vm, force=args.force)
             if args.get_available:
-                if not args.fool:
-                    parser.error(
-                        'this requires --i-understand-format-is-unstable '
-                        'and a sacrifice of one cute kitten')
                 if not args.fields:
                     sys.stdout.write(''.join('{} - {}\n'.format(*available)
                                              for available in
