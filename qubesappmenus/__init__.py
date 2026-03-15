@@ -501,10 +501,35 @@ class Appmenus(object):
                     refresh_cache)
             shutil.rmtree(appmenus_dir)
 
+        self._remove_menu_files(vm)
+
         if refresh_cache:
             if 'KDE_SESSION_UID' in os.environ:
                 subprocess.call(['kbuildsycoca' +
                                  os.environ.get('KDE_SESSION_VERSION', '4')])
+
+    @staticmethod
+    def _remove_menu_files(vm):
+        """Remove .menu files for a VM from ~/.config/menus/applications-merged/
+
+        xdg-desktop-menu uninstall does not always clean these up (errors
+        are suppressed, partial installs can leave entries behind).
+        """
+        menus_dir = os.path.join(xdg.BaseDirectory.xdg_config_home,
+                                 'menus', 'applications-merged')
+        if not os.path.isdir(menus_dir):
+            return
+        vm_name = str(vm)
+        escaped = vm_name_escape(vm_name)
+        for prefix in ('qubes-vm-directory', 'qubes-dispvm-directory'):
+            with contextlib.suppress(FileNotFoundError):
+                os.unlink(os.path.join(menus_dir,
+                                       'user-' + prefix + escaped + '.menu'))
+            # also try old format (before VM name escaping was introduced)
+            with contextlib.suppress(FileNotFoundError):
+                os.unlink(os.path.join(menus_dir,
+                                       'user-' + prefix + '-' +
+                                       vm_name + '.menu'))
 
     def appicons_create(self, vm, srcdirs=(), force=False):
         """Create/update applications icons"""
