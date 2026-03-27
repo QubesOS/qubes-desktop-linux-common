@@ -744,6 +744,27 @@ class TC_00_Appmenus(unittest.TestCase):
         appmenus_cls.return_value.get_available.assert_called_once_with(vm)
         self.assertEqual(stdout.getvalue(), 'xterm.desktop - XTerm\n')
 
+    @unittest.mock.patch('qubesappmenus.Appmenus')
+    def test_133_unstable_flag_is_ignored(self, appmenus_cls):
+        vm = TestVM('test-inst-vm', klass='AppVM',
+            label=self.app.labels[1])
+        self.app.domains[vm.name] = vm
+        appmenus_cls.return_value.get_available.return_value = [
+            ('xterm.desktop', 'XTerm')]
+
+        with unittest.mock.patch('sys.stdout', new_callable=io.StringIO) \
+                as stdout, \
+             unittest.mock.patch('sys.stderr', new_callable=io.StringIO) \
+                as stderr:
+            qubesappmenus.main(
+                ['--force-root', '--get-available',
+                 '--i-understand-format-is-unstable', vm.name],
+                app=self.app)
+
+        appmenus_cls.return_value.get_available.assert_called_once_with(vm)
+        self.assertEqual(stdout.getvalue(), 'xterm.desktop - XTerm\n')
+        self.assertIn('deprecated', stderr.getvalue())
+
 
     @unittest.mock.patch('subprocess.check_call')
     def test_140_remove_cleans_menu_files(self, mock_subprocess):
