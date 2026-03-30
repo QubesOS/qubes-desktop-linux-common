@@ -1,3 +1,19 @@
+qubes-desktop-linux-common (4.4.0-1) unstable; urgency=medium
+
+  [ Jayant-Kernel ]
+  * ci: handle pyproject-based core-admin-client in checks job
+  * qvm-appmenus: drop unstable-format pledge for get-available
+  * tests: allow get-available CLI test to run as root
+
+  [ Marek Marczykowski-Górecki ]
+  * ci: switch to devel version
+
+  [ Jayant-Kernel ]
+  * fix menu file leftover on vm remove
+  * tests: assert deprecated unstable flag is ignored with warning
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Mon, 30 Mar 2026 15:19:32 +0200
+
 qubes-desktop-linux-common (4.3.1-1) unstable; urgency=medium
 
   [ Ben Grande ]
