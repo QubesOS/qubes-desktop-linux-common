@@ -393,6 +393,99 @@ class TC_00_Appmenus(unittest.TestCase):
             self.assertIn(b'X-Qubes-NonDispvmExec=', content)
             self.assertNotIn(b'X-Qubes-DispvmExec=', content)
 
+    def test_008_appmenus_update_when_template_for_dispvms_enabled(self):
+        """Dispvm menu entries appear after template_for_dispvms is set True.
+
+        Regression test for QubesOS/qubes-issues#9194: setting
+        template_for_dispvms on a VM must regenerate menus so the
+        "Disposable:" submenu shows up.
+        """
+        tpl = TestVM('test-inst-tpl',
+            klass='TemplateVM',
+            virt_mode='pvh',
+            updateable=True,
+            provides_network=False,
+            label=self.app.labels[1])
+        self.ext.appmenus_init(tpl)
+        appvm = TestVM('test-inst-dvm',
+            klass='AppVM',
+            template=tpl,
+            virt_mode='pvh',
+            updateable=False,
+            provides_network=False,
+            template_for_dispvms=False,
+            label=self.app.labels[1])
+        self.ext.appmenus_init(appvm)
+        with open(os.path.join(self.ext.templates_dirs(tpl)[0],
+                'evince.desktop'), 'wb') as f:
+            f.write(importlib.resources.files(
+                __package__).joinpath(
+                'test-data/evince.desktop.template').read_bytes())
+
+        # First create without dispvm — no "Disposable:" directory entry
+        self.ext.appmenus_create(appvm, refresh_cache=False)
+        appmenus_dir = self.ext.appmenus_dir(appvm)
+        dispvm_dir = os.path.join(appmenus_dir,
+            'qubes-dispvm-directory_test_dinst_ddvm.directory')
+        self.assertPathNotExists(dispvm_dir)
+
+        # Now simulate setting template_for_dispvms=True + appmenus-dispvm
+        appvm.template_for_dispvms = True
+        appvm.features['appmenus-dispvm'] = '1'
+        self.ext.appmenus_create(appvm, refresh_cache=False)
+
+        self.assertPathExists(dispvm_dir)
+        dispvm_evince = os.path.join(appmenus_dir,
+            'org.qubes-os.dispvm._test_dinst_ddvm.evince.desktop')
+        self.assertPathExists(dispvm_evince)
+
+    def test_009_appmenus_update_when_template_for_dispvms_disabled(self):
+        """Dispvm menu entries are removed after template_for_dispvms is cleared.
+
+        Regression test for QubesOS/qubes-issues#9194: clearing
+        template_for_dispvms must regenerate menus so stale
+        "Disposable:" entries are removed.
+        """
+        tpl = TestVM('test-inst-tpl2',
+            klass='TemplateVM',
+            virt_mode='pvh',
+            updateable=True,
+            provides_network=False,
+            label=self.app.labels[1])
+        self.ext.appmenus_init(tpl)
+        appvm = TestVM('test-inst-dvm2',
+            klass='AppVM',
+            template=tpl,
+            virt_mode='pvh',
+            updateable=False,
+            provides_network=False,
+            template_for_dispvms=True,
+            label=self.app.labels[1])
+        appvm.features['appmenus-dispvm'] = '1'
+        self.ext.appmenus_init(appvm)
+        with open(os.path.join(self.ext.templates_dirs(tpl)[0],
+                'evince.desktop'), 'wb') as f:
+            f.write(importlib.resources.files(
+                __package__).joinpath(
+                'test-data/evince.desktop.template').read_bytes())
+
+        # First create as dispvm template — "Disposable:" entries should exist
+        self.ext.appmenus_create(appvm, refresh_cache=False)
+        appmenus_dir = self.ext.appmenus_dir(appvm)
+        dispvm_dir = os.path.join(appmenus_dir,
+            'qubes-dispvm-directory_test_dinst_ddvm2.directory')
+        self.assertPathExists(dispvm_dir)
+
+        # Simulate clearing template_for_dispvms
+        appvm.template_for_dispvms = False
+        del appvm.features['appmenus-dispvm']
+        self.ext.appmenus_create(appvm, refresh_cache=False)
+
+        self.assertPathNotExists(dispvm_dir)
+        dispvm_evince = os.path.join(appmenus_dir,
+            'org.qubes-os.dispvm._test_dinst_ddvm2.evince.desktop')
+        self.assertPathNotExists(dispvm_evince)
+
     def test_100_get_appmenus(self):
         self.maxDiff = None
         def _run(service, **kwargs):

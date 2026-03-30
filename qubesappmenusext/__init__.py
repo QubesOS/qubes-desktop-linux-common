@@ -171,6 +171,14 @@ class AppmenusExtension(qubes.ext.Extension):
         self.vm_tasks[vm.name].append(
             asyncio.ensure_future(self.update_appmenus(vm)))
 
+    @qubes.ext.handler('property-set:template_for_dispvms')
+    def template_for_dispvms_setter(self, vm, event, **kwargs):
+        if vm.app.vmm.offline_mode:
+            return
+        self.collect_done_tasks(vm)
+        self.vm_tasks[vm.name].append(
+            asyncio.ensure_future(self.update_appmenus(vm)))
+
     @qubes.ext.handler('property-set:guivm')
     def provides_network_setter(self, vm, event, name, newvalue, oldvalue=None):
         if vm.app.vmm.offline_mode:
