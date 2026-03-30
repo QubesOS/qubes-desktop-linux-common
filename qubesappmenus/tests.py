@@ -24,6 +24,7 @@
 
 import io
 import os
+import shutil
 import tempfile
 import sys
 
@@ -742,6 +743,85 @@ class TC_00_Appmenus(unittest.TestCase):
 
         appmenus_cls.return_value.get_available.assert_called_once_with(vm)
         self.assertEqual(stdout.getvalue(), 'xterm.desktop - XTerm\n')
+
+    @unittest.mock.patch('qubesappmenus.Appmenus')
+    def test_133_unstable_flag_is_ignored(self, appmenus_cls):
+        vm = TestVM('test-inst-vm', klass='AppVM',
+            label=self.app.labels[1])
+        self.app.domains[vm.name] = vm
+        appmenus_cls.return_value.get_available.return_value = [
+            ('xterm.desktop', 'XTerm')]
+
+        with unittest.mock.patch('sys.stdout', new_callable=io.StringIO) \
+                as stdout, \
+             unittest.mock.patch('sys.stderr', new_callable=io.StringIO) \
+                as stderr:
+            qubesappmenus.main(
+                ['--force-root', '--get-available',
+                 '--i-understand-format-is-unstable', vm.name],
+                app=self.app)
+
+        appmenus_cls.return_value.get_available.assert_called_once_with(vm)
+        self.assertEqual(stdout.getvalue(), 'xterm.desktop - XTerm\n')
+        self.assertIn('deprecated', stderr.getvalue())
+
+
+    @unittest.mock.patch('subprocess.check_call')
+    def test_140_remove_cleans_menu_files(self, mock_subprocess):
+        tpl = TestVM('test-inst-tpl',
+            klass='TemplateVM',
+            virt_mode='pvh',
+            updateable=True,
+            provides_network=False,
+            label=self.app.labels[1])
+        self.ext.appmenus_init(tpl)
+        appvm = TestVM('test-inst-app',
+            klass='AppVM',
+            template=tpl,
+            virt_mode='pvh',
+            updateable=False,
+            provides_network=False,
+            label=self.app.labels[1])
+        self.ext.appmenus_init(appvm)
+        self.ext.appmenus_create(appvm, refresh_cache=False)
+
+        config_dir = tempfile.mkdtemp()
+        try:
+            menus_dir = os.path.join(config_dir, 'menus', 'applications-merged')
+            os.makedirs(menus_dir)
+            escaped = qubesappmenus.vm_name_escape(appvm.name)
+            # current-format .menu file
+            menu_file = os.path.join(menus_dir,
+                'user-qubes-vm-directory' + escaped + '.menu')
+            # old-format .menu file (pre-escaping)
+            old_menu_file = os.path.join(menus_dir,
+                'user-qubes-vm-directory-' + appvm.name + '.menu')
+            for path in (menu_file, old_menu_file):
+                with open(path, 'w', encoding='utf-8') as f:
+                    f.write('<Menu/>\n')
+
+            with unittest.mock.patch('xdg.BaseDirectory.xdg_config_home',
+                                     config_dir):
+                self.ext.appmenus_remove(appvm, refresh_cache=False)
+
+            self.assertPathNotExists(menu_file)
+            self.assertPathNotExists(old_menu_file)
+        finally:
+            shutil.rmtree(config_dir)
+
+    def test_141_remove_menu_files_missing_dir(self):
+        config_dir = tempfile.mkdtemp()
+        try:
+            menus_dir = os.path.join(config_dir, 'menus', 'applications-merged')
+            with unittest.mock.patch('xdg.BaseDirectory.xdg_config_home',
+                                     config_dir), \
+                 unittest.mock.patch('os.unlink') as mock_unlink:
+                # Missing applications-merged directory should be ignored.
+                qubesappmenus.Appmenus._remove_menu_files('test-vm')
+                mock_unlink.assert_not_called()
+            self.assertFalse(os.path.exists(menus_dir))
+        finally:
+            shutil.rmtree(config_dir)
 
 
 def list_tests():
