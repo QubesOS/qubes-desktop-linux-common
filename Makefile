@@ -7,6 +7,7 @@ all:
 install:
 	## Tools
 	install -D -m755 tools/qvm-xkill $(DESTDIR)/usr/bin/qvm-xkill
+	install -D -m755 tools/qubes-focused-vm $(DESTDIR)/usr/bin/qubes-focused-vm
 
 	### Icons
 	mkdir -p $(DESTDIR)/usr/share/qubes/icons
