@@ -1,6 +1,6 @@
 usr/bin/qvm-appmenus
+usr/bin/qvm-xget-focus
 usr/bin/qvm-xkill
-usr/bin/qubes-focused-vm
 usr/bin/qvm-sync-appmenus
 usr/share/qubes/icons/*.png
 usr/share/icons/hicolor/scalable/apps/qubes-vm-settings.svg
