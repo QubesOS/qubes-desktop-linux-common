@@ -175,6 +175,8 @@ class AppmenusExtension(qubes.ext.Extension):
     def template_for_dispvms_setter(self, vm, event, **kwargs):
         if vm.app.vmm.offline_mode:
             return
+        if not vm.features.get('appmenus-dispvm', False):
+            return
         self.collect_done_tasks(vm)
         self.vm_tasks[vm.name].append(
             asyncio.ensure_future(self.update_appmenus(vm)))
@@ -194,6 +196,8 @@ class AppmenusExtension(qubes.ext.Extension):
     def on_feature_del_appmenus_dispvm(self, vm, event, feature):
         if vm.app.vmm.offline_mode:
             return
+        if not getattr(vm, 'template_for_dispvms', False):
+            return
         self.collect_done_tasks(vm)
         self.vm_tasks[vm.name].append(
             asyncio.ensure_future(self.update_appmenus(vm)))
@@ -203,12 +207,14 @@ class AppmenusExtension(qubes.ext.Extension):
             value, oldvalue=None):
         if vm.app.vmm.offline_mode:
             return
+        if not getattr(vm, 'template_for_dispvms', False):
+            return
         self.collect_done_tasks(vm)
         self.vm_tasks[vm.name].append(
             asyncio.ensure_future(self.update_appmenus(vm)))
 
     @qubes.ext.handler('domain-feature-set:menu-items')
-    def on_feature_set_appmenus_dispvm(self, vm, event, feature,
+    def on_feature_set_menu_items(self, vm, event, feature,
             value, oldvalue=None):
         if vm.app.vmm.offline_mode:
             return
