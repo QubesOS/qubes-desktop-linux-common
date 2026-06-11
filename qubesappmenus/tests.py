@@ -189,17 +189,21 @@ class TC_00_Appmenus(unittest.TestCase):
 
     def assertUpdateScheduled(self, callback, should_schedule):
         ext = qubesappmenusext.AppmenusExtension()
-        ext.collect_done_tasks = unittest.mock.Mock()
-        ext.update_appmenus = unittest.mock.Mock(return_value='update-task')
-        with unittest.mock.patch('asyncio.ensure_future') as ensure_future:
+        collect_done_tasks = unittest.mock.Mock()
+        update_appmenus = unittest.mock.Mock(return_value='update-task')
+        with unittest.mock.patch.object(ext, 'collect_done_tasks',
+                collect_done_tasks), \
+                unittest.mock.patch.object(ext, 'update_appmenus',
+                    update_appmenus), \
+                unittest.mock.patch('asyncio.ensure_future') as ensure_future:
             callback(ext)
         if should_schedule:
-            ext.collect_done_tasks.assert_called_once()
-            ext.update_appmenus.assert_called_once()
+            collect_done_tasks.assert_called_once()
+            update_appmenus.assert_called_once()
             ensure_future.assert_called_once_with('update-task')
         else:
-            ext.collect_done_tasks.assert_not_called()
-            ext.update_appmenus.assert_not_called()
+            collect_done_tasks.assert_not_called()
+            update_appmenus.assert_not_called()
             ensure_future.assert_not_called()
 
     def test_000_appmenus_ext_template_for_dispvms_needs_feature(self):
