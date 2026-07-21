@@ -1,0 +1,148 @@
+#!/usr/bin/bash --posix
+
+#somewhat adapted from https://github.com/QubesOS/qubes-desktop-linux-i3-settings-qubes/blob/main/qubes-i3-sensible-terminal
+
+# Set POSIX-compliant mode to make bash and certain utils more predictable.
+# Bash-specific features are still used, that's intentional
+POSIXLY_CORRECT=1
+set -o posix
+readonly POSIXLY_CORRECT
+export POSIXLY_CORRECT
+
+# Set IFS explicitly. POSIX does not enforce whether IFS should be inherited
+# from the environment, so it's safer to set it explicitly
+IFS=$' \t\n'
+export IFS
+
+# Exit on errors and unset variables
+set -eEu
+
+declare -r DOMU_TERMINAL="qubes-run-terminal"
+declare -r DOMU_CONSOLE="qvm-console-dispvm"
+
+print_usage() {
+  cat <<USAGE >&2
+Usage:  $(basename "$0") [--console] [--user USER]
+
+Options:
+  -h, --help        print this usage information
+  -c, --console     launch disposable console instead of terminal
+  -u, --user        run terminal as specified user
+USAGE
+  return 0
+}
+
+#from https://github.com/i3/i3/blob/next/i3-sensible-terminal
+dom0_terminal() {
+  if [[ "$arg_user" = "DEFAULT" ]];then
+  for terminal in x-terminal-emulator xfce4-terminal xterm st mate-terminal gnome-terminal terminator urxvt rxvt termit Eterm aterm uxterm roxterm termite lxterminal terminology qterminal lilyterm tilix terminix konsole kitty guake tilda alacritty hyper wezterm rio ghostty; do
+    command -v "$terminal" &>/dev/null && exec "$terminal"
+  else 
+  for terminal in x-terminal-emulator xfce4-terminal xterm st mate-terminal gnome-terminal terminator urxvt rxvt termit Eterm aterm uxterm roxterm termite lxterminal terminology qterminal lilyterm tilix terminix konsole kitty guake tilda alacritty hyper wezterm rio ghostty; do
+    command -v "$terminal" &>/dev/null && exec sudo -u "$arg_user" "$terminal"
+  done
+}
+
+main() {
+  vm="$(/usr/bin/qvm-xget-focus)"
+
+  if test -z "$vm"; then
+      dom0_terminal
+      exit $?
+  fi
+
+  # Launch console for VM (hvc)
+  if test "$arg_console" = "true"; then
+    exec -- "$DOMU_CONSOLE" -- "$vm"
+  fi
+
+  if command -v qrexec-client >/dev/null; then
+    exec -- qrexec-client -e -d "$vm" -- \
+      "$arg_user:QUBESRPC qubes.StartApp+$DOMU_TERMINAL $vm"
+  fi
+
+  # Else, if qrexec-client can't be used (e.g. in a GUIVM), use qvm-run instead
+  case "$arg_user" in
+  DEFAULT)
+    exec qvm-run --no-gui --service -- "$vm" qubes.StartApp+"$DOMU_TERMINAL"
+    ;;
+  *)
+    exec qvm-run --no-gui --service -u "$arg_user" -- "$vm" qubes.StartApp+"$DOMU_TERMINAL"
+    ;;
+  esac
+}
+
+# Adapted from https://stackoverflow.com/a/29754866
+parse_options() {
+  declare -g arg_user="DEFAULT"
+  declare -g arg_console=""
+
+  if [ $# -lt 1 ]; then
+    return
+  fi
+  # Check whether getopt version is "enhanced"
+  # shellcheck disable=SC2251
+  ! getopt --test >/dev/null
+  if [[ ${PIPESTATUS[0]} -ne 4 ]]; then
+    printf '%s\n' 'This script requires getopt enhanced to work properly' >&2
+    exit 2
+  fi
+
+  # Set available options
+  declare -r LONGOPTS=help,console,user:
+  declare -r OPTIONS=hcu:
+
+  # Get arguments from "$@" using getopt
+  IFS=" " read -r -a PARSED <<<"$(getopt --options=$OPTIONS --longoptions=$LONGOPTS --name "$0" -- "$@")"
+  eval set -- "${PARSED[*]}"
+
+  # Write to argument variables
+  while true; do
+    case "$1" in
+    -h | --help)
+      print_usage
+      exit 0
+      ;;
+    -u | --user)
+      arg_user="$2"
+      shift 2
+      ;;
+    -c | --console)
+      arg_console="true"
+      shift
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      printf '%s\n' "$(basename "$0"): Invalid argument" >&2
+      print_usage
+      exit 2
+      ;;
+    esac
+  done
+
+  # Handle positional arguments ($1, $2, …)
+  if [ $# -gt 0 ]; then
+    case "${1-}" in
+    console)
+      arg_console="true"
+      printf '%s\n' "$(basename "$0"): Positional arguments are deprecated and will be removed in the future. Use --console instead" >&2
+      ;;
+    *)
+      printf '%s\n' "$(basename "$0"): Invalid argument" >&2
+      print_usage
+      exit 2
+      ;;
+    esac
+  fi
+
+  declare -gr arg_user
+  declare -gr arg_console
+
+  return
+}
+
+parse_options "$@"
+main

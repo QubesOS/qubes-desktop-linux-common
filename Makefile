@@ -7,6 +7,7 @@ all:
 install:
 	## Tools
 	install -D -m755 tools/qvm-xkill $(DESTDIR)/usr/bin/qvm-xkill
+	install -D -m755 tools/qvm-sensible-browser $(DESTDIR)/usr/bin/qvm-sensible-browser
 
 	### Icons
 	mkdir -p $(DESTDIR)/usr/share/qubes/icons
