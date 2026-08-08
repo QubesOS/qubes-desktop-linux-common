@@ -27,6 +27,7 @@ import os
 import shutil
 import tempfile
 import sys
+import types
 
 import unittest
 import unittest.mock
@@ -35,6 +36,28 @@ import logging
 import importlib.resources
 import qubesappmenus
 import qubesappmenus.receive
+
+try:
+    import qubesappmenusext
+except ModuleNotFoundError as e:
+    if e.name.split('.')[0] != 'qubes':
+        raise
+    qubes_module = types.ModuleType('qubes')
+    qubes_ext_module = types.ModuleType('qubes.ext')
+    qubes_utils_module = types.ModuleType('qubes.utils')
+
+    def handler(*args, **kwargs):
+        # Only decorator registration is needed for these unit tests.
+        return lambda func: func
+
+    qubes_ext_module.handler = handler
+    qubes_ext_module.Extension = object
+    qubes_utils_module.sanitize_stderr_for_log = lambda stderr: stderr
+    qubes_module.ext = qubes_ext_module
+    sys.modules['qubes'] = qubes_module
+    sys.modules['qubes.ext'] = qubes_ext_module
+    sys.modules['qubes.utils'] = qubes_utils_module
+    import qubesappmenusext
 
 class Label(object):
     def __init__(self, index, color, name):
@@ -48,6 +71,12 @@ class TestApp(object):
 
     def __init__(self):
         self.domains = {}
+
+class TestVMM(object):
+    offline_mode = False
+
+class TestAppmenusExtApp(object):
+    vmm = TestVMM()
 
 class TestFeatures(dict):
 
@@ -95,6 +124,18 @@ class TestVM(object):
         if self.features.get('servicevm', False):
             return 'servicevm-' + raw_icon_name
         return 'appvm-' + raw_icon_name
+
+class TestAppmenusExtVM(object):
+    # pylint: disable=too-few-public-methods
+    app = TestAppmenusExtApp()
+
+    def __init__(self, template_for_dispvms=False,
+            appmenus_dispvm=False):
+        self.name = 'test-ext-vm'
+        self.template_for_dispvms = template_for_dispvms
+        self.features = TestFeatures(self)
+        if appmenus_dispvm:
+            self.features['appmenus-dispvm'] = '1'
 
 VMPREFIX = 'test-'
 
@@ -146,6 +187,63 @@ class TC_00_Appmenus(unittest.TestCase):
     def assertPathNotExists(self, path):
         if os.path.exists(path):
             self.fail("Path {} exists while it should not".format(path))
+
+    def assertUpdateScheduled(self, callback, should_schedule):
+        ext = qubesappmenusext.AppmenusExtension()
+        collect_done_tasks = unittest.mock.Mock()
+        update_appmenus = unittest.mock.Mock(return_value='update-task')
+        with unittest.mock.patch.object(ext, 'collect_done_tasks',
+                collect_done_tasks), \
+                unittest.mock.patch.object(ext, 'update_appmenus',
+                    update_appmenus), \
+                unittest.mock.patch('asyncio.ensure_future') as ensure_future:
+            callback(ext)
+        if should_schedule:
+            collect_done_tasks.assert_called_once()
+            update_appmenus.assert_called_once()
+            ensure_future.assert_called_once_with('update-task')
+        else:
+            collect_done_tasks.assert_not_called()
+            update_appmenus.assert_not_called()
+            ensure_future.assert_not_called()
+
+    def test_000_appmenus_ext_template_for_dispvms_needs_feature(self):
+        vm = TestAppmenusExtVM(
+            template_for_dispvms=True,
+            appmenus_dispvm=False)
+
+        self.assertUpdateScheduled(
+            lambda ext: ext.template_for_dispvms_setter(vm, None),
+            False)
+
+        vm.features['appmenus-dispvm'] = '1'
+        self.assertUpdateScheduled(
+            lambda ext: ext.template_for_dispvms_setter(vm, None),
+            True)
+
+    def test_000_appmenus_ext_dispvm_feature_needs_property(self):
+        vm = TestAppmenusExtVM(
+            template_for_dispvms=False,
+            appmenus_dispvm=True)
+
+        self.assertUpdateScheduled(
+            lambda ext: ext.on_feature_set_appmenus_dispvm(
+                vm, None, 'appmenus-dispvm', '1'),
+            False)
+        self.assertUpdateScheduled(
+            lambda ext: ext.on_feature_del_appmenus_dispvm(
+                vm, None, 'appmenus-dispvm'),
+            False)
+
+        vm.template_for_dispvms = True
+        self.assertUpdateScheduled(
+            lambda ext: ext.on_feature_set_appmenus_dispvm(
+                vm, None, 'appmenus-dispvm', '1'),
+            True)
+        self.assertUpdateScheduled(
+            lambda ext: ext.on_feature_del_appmenus_dispvm(
+                vm, None, 'appmenus-dispvm'),
+            True)
 
 
     def test_000_templates_dirs(self):
@@ -392,6 +490,99 @@ class TC_00_Appmenus(unittest.TestCase):
             content = f.read()
             self.assertIn(b'X-Qubes-NonDispvmExec=', content)
             self.assertNotIn(b'X-Qubes-DispvmExec=', content)
+
+    def test_008_appmenus_update_when_template_for_dispvms_enabled(self):
+        """Dispvm menu entries appear after template_for_dispvms is set True.
+
+        Regression test for QubesOS/qubes-issues#9194: setting
+        template_for_dispvms on a VM must regenerate menus so the
+        "Disposable:" submenu shows up.
+        """
+        tpl = TestVM('test-inst-tpl',
+            klass='TemplateVM',
+            virt_mode='pvh',
+            updateable=True,
+            provides_network=False,
+            label=self.app.labels[1])
+        self.ext.appmenus_init(tpl)
+        appvm = TestVM('test-inst-dvm',
+            klass='AppVM',
+            template=tpl,
+            virt_mode='pvh',
+            updateable=False,
+            provides_network=False,
+            template_for_dispvms=False,
+            label=self.app.labels[1])
+        self.ext.appmenus_init(appvm)
+        with open(os.path.join(self.ext.templates_dirs(tpl)[0],
+                'evince.desktop'), 'wb') as f:
+            f.write(importlib.resources.files(
+                __package__).joinpath(
+                'test-data/evince.desktop.template').read_bytes())
+
+        # First create without dispvm — no "Disposable:" directory entry
+        self.ext.appmenus_create(appvm, refresh_cache=False)
+        appmenus_dir = self.ext.appmenus_dir(appvm)
+        dispvm_dir = os.path.join(appmenus_dir,
+            'qubes-dispvm-directory_test_dinst_ddvm.directory')
+        self.assertPathNotExists(dispvm_dir)
+
+        # Now simulate setting template_for_dispvms=True + appmenus-dispvm
+        appvm.template_for_dispvms = True
+        appvm.features['appmenus-dispvm'] = '1'
+        self.ext.appmenus_create(appvm, refresh_cache=False)
+
+        self.assertPathExists(dispvm_dir)
+        dispvm_evince = os.path.join(appmenus_dir,
+            'org.qubes-os.dispvm._test_dinst_ddvm.evince.desktop')
+        self.assertPathExists(dispvm_evince)
+
+    def test_009_appmenus_update_when_template_for_dispvms_disabled(self):
+        """Dispvm menu entries are removed after template_for_dispvms is cleared.
+
+        Regression test for QubesOS/qubes-issues#9194: clearing
+        template_for_dispvms must regenerate menus so stale
+        "Disposable:" entries are removed.
+        """
+        tpl = TestVM('test-inst-tpl2',
+            klass='TemplateVM',
+            virt_mode='pvh',
+            updateable=True,
+            provides_network=False,
+            label=self.app.labels[1])
+        self.ext.appmenus_init(tpl)
+        appvm = TestVM('test-inst-dvm2',
+            klass='AppVM',
+            template=tpl,
+            virt_mode='pvh',
+            updateable=False,
+            provides_network=False,
+            template_for_dispvms=True,
+            label=self.app.labels[1])
+        appvm.features['appmenus-dispvm'] = '1'
+        self.ext.appmenus_init(appvm)
+        with open(os.path.join(self.ext.templates_dirs(tpl)[0],
+                'evince.desktop'), 'wb') as f:
+            f.write(importlib.resources.files(
+                __package__).joinpath(
+                'test-data/evince.desktop.template').read_bytes())
+
+        # First create as dispvm template — "Disposable:" entries should exist
+        self.ext.appmenus_create(appvm, refresh_cache=False)
+        appmenus_dir = self.ext.appmenus_dir(appvm)
+        dispvm_dir = os.path.join(appmenus_dir,
+            'qubes-dispvm-directory_test_dinst_ddvm2.directory')
+        self.assertPathExists(dispvm_dir)
+
+        # Simulate clearing template_for_dispvms
+        appvm.template_for_dispvms = False
+        del appvm.features['appmenus-dispvm']
+        self.ext.appmenus_create(appvm, refresh_cache=False)
+
+        self.assertPathNotExists(dispvm_dir)
+        dispvm_evince = os.path.join(appmenus_dir,
+            'org.qubes-os.dispvm._test_dinst_ddvm2.evince.desktop')
+        self.assertPathNotExists(dispvm_evince)
 
     def test_100_get_appmenus(self):
         self.maxDiff = None
