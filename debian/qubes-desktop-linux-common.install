@@ -1,4 +1,5 @@
 usr/bin/qvm-appmenus
+usr/bin/qvm-xget-focus
 usr/bin/qvm-xkill
 usr/bin/qvm-sync-appmenus
 usr/share/qubes/icons/*.png

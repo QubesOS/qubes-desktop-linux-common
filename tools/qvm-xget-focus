@@ -1,0 +1,16 @@
+#!/bin/sh
+
+set -eu
+
+id=$(xprop -root _NET_ACTIVE_WINDOW)
+id=${id##* }
+
+vm=$(xprop -id "${id}" | grep '_QUBES_VMNAME(STRING)') || true
+
+if [ -z "${vm}" ]; then
+    exit 0
+else
+    vm=${vm#*\"}
+    vm="${vm%\"*}"
+    printf '%s' "${vm}"
+fi
