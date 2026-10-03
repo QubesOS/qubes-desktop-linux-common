@@ -92,6 +92,7 @@ fi
 %files
 %defattr(-,root,root,-)
 %{_bindir}/qvm-xkill
+%{_bindir}/qvm-sensible-browser
 %{_mandir}/man1/qvm-*.1*
 %dir %{python3_sitelib}/qubesdesktop-*.egg-info
 %{python3_sitelib}/qubesdesktop-*.egg-info/*

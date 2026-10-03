@@ -1,0 +1,126 @@
+#!/usr/bin/bash --posix
+
+#adapted from https://github.com/QubesOS/qubes-desktop-linux-i3-settings-qubes/blob/main/qubes-i3-sensible-terminal
+
+# Set POSIX-compliant mode to make bash and certain utils more predictable.
+# Bash-specific features are still used, that's intentional
+POSIXLY_CORRECT=1
+set -o posix
+readonly POSIXLY_CORRECT
+export POSIXLY_CORRECT
+
+# Set IFS explicitly. POSIX does not enforce whether IFS should be inherited
+# from the environment, so it's safer to set it explicitly
+IFS=$' \t\n'
+export IFS
+
+# Exit on errors and unset variables
+set -eEu
+
+print_usage() {
+  cat <<USAGE >&2
+Usage:  $(basename "$0") [--disposable] [--user USER]
+
+Options:
+  -h, --help        print this usage information
+  -d, --disposable  launch file manager in current vm as disposable instead (will fallback to default_dispvm if currently focused vm isn't template_for_dispvms)
+  -u, --user        run file manager as specified user 
+USAGE
+  return 0
+}
+domU_launch_terminal() {
+  if [[ "$arg_user" != "DEFAULT" ]]; then
+    qrexec-client -d "$vm" "$arg_user:qubes-open ."
+  else
+    qrexec-client -d "$vm" 'DEFAULT:qubes-open .'
+  fi
+}
+
+disp_launch_terminal() {
+  #if current vm cant be dispvm fallback to default dispvm
+  if [[ "$(qvm-prefs "$vm" template_for_dispvms 2>/dev/null)" != "True" ]]; then
+    dispvm="$(qubes-prefs default_dispvm)"
+  else
+    dispvm="$vm"
+  fi
+  if [[ "$arg_user" != "DEFAULT" ]]; then
+    qvm-run -u "$arg_user" --dispvm "$dispvm" qubes-open . >/dev/null 2>&1 &
+  else
+    qvm-run --dispvm "$dispvm" qubes-open . >/dev/null 2>&1 &
+  fi
+}
+
+main() {
+  vm="$(/usr/bin/qvm-xget-focus)"
+  declare -g vm
+  if test -z "$vm" && test "$arg_disposable" != "true"; then
+    #vm is dom0
+    xdg-open .
+    exit 1
+  fi
+  if test "$arg_disposable" = "true"; then
+    disp_launch_terminal
+    exit $?
+  fi
+  domU_launch_terminal
+}
+
+# Adapted from https://stackoverflow.com/a/29754866
+parse_options() {
+  declare -g arg_user="DEFAULT"
+  declare -g arg_disposable=""
+
+  if [ $# -lt 1 ]; then
+    return
+  fi
+  # Check whether getopt version is "enhanced"
+  # shellcheck disable=SC2251
+  ! getopt --test >/dev/null
+  if [[ ${PIPESTATUS[0]} -ne 4 ]]; then
+    printf '%s\n' 'This script requires getopt enhanced to work properly' >&2
+    exit 2
+  fi
+
+  # Set available options
+  declare -r LONGOPTS=help,disposable,user:
+  declare -r OPTIONS=hdu:
+
+  # Get arguments from "$@" using getopt
+  IFS=" " read -r -a PARSED <<<"$(getopt --options=$OPTIONS --longoptions=$LONGOPTS --name "$0" -- "$@")"
+  eval set -- "${PARSED[*]}"
+
+  # Write to argument variables
+  while true; do
+    case "$1" in
+    -h | --help)
+      print_usage
+      exit 0
+      ;;
+    -u | --user)
+      arg_user="$2"
+      shift 2
+      ;;
+    -d | --disposable)
+      arg_disposable="true"
+      shift
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      printf '%s\n' "$(basename "$0"): Invalid argument" >&2
+      print_usage
+      exit 2
+      ;;
+    esac
+  done
+
+  declare -gr arg_user
+  declare -gr arg_disposable
+
+  return
+}
+
+parse_options "$@"
+main
