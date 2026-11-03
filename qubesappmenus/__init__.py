@@ -88,8 +88,8 @@ class Appmenus(object):
         dirs.append(my_dir)
         if template:
             dirs.extend(self.templates_dirs(template))
-        elif hasattr(vm, 'template'):
-            dirs.extend(self.templates_dirs(vm.template))
+        elif active_template := vm.get_active_template():
+            dirs.extend(self.templates_dirs(active_template))
         return dirs
 
     def template_icons_dirs(self, vm):
@@ -98,8 +98,8 @@ class Appmenus(object):
         my_dir = os.path.join(basedir, vm.name,
                               AppmenusSubdirs.template_icons_subdir)
         dirs.append(my_dir)
-        if hasattr(vm, 'template'):
-            dirs.extend(self.template_icons_dirs(vm.template))
+        if active_template := vm.get_active_template():
+            dirs.extend(self.templates_dirs(active_template))
         return dirs
 
     @staticmethod
@@ -604,7 +604,7 @@ class Appmenus(object):
         clone_from_src = src is not None
         if src is None:
             try:
-                src = vm.template
+                src = vm.get_active_template()
             except AttributeError:
                 pass
         own_templates_dir = os.path.join(prefix_dir,
