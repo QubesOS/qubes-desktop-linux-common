@@ -2,4 +2,5 @@
 Encoding=UTF-8
 Type=Directory
 Name=Service: %VMNAME%
+Name[he]=שירות: %VMNAME%
 Icon=%XDGICON%
