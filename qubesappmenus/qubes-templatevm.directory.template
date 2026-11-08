@@ -2,4 +2,5 @@
 Encoding=UTF-8
 Type=Directory
 Name=Template: %VMNAME%
+Name[he]=תבנית: %VMNAME%
 Icon=%XDGICON%
