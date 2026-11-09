@@ -12,7 +12,7 @@ if __name__ == '__main__':
         license='GPL2+',
         url='https://www.qubes-os.org/',
 
-        packages=('qubesappmenus', 'qubesappmenusext',),
+        packages=('qubesappmenus', 'qubesappmenusext', 'qubesclipboard',),
 
         package_data = {
             'qubesappmenus': ['test-data/*', '*.template'],
@@ -22,6 +22,7 @@ if __name__ == '__main__':
             'console_scripts': [
                 'qvm-sync-appmenus = qubesappmenus.receive:main',
                 'qvm-appmenus = qubesappmenus:main',
+                'qubes-dom0-copy-to-clipboard = qubesclipboard:main',
             ],
             'qubes.ext': [
                 'qubesappmenus = qubesappmenusext:AppmenusExtension',
@@ -29,6 +30,7 @@ if __name__ == '__main__':
             'qubes.tests.extra': [
                 'qubesappmenus = qubesappmenus.tests:list_tests',
                 'qubesappmenus_integ = qubesappmenus.tests_integ:list_tests',
+                'qubesclipboard = qubesclipboard.tests:list_tests',
             ],
         }
     )
