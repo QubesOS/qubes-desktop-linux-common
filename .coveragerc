@@ -1,4 +1,4 @@
 [run]
-source = qubesappmenus
-omit = qubesappmenus/tests*
+source = qubesappmenus,qubesclipboard
+omit = qubesappmenus/tests*,qubesclipboard/tests*
 

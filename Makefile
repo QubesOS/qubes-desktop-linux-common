@@ -30,6 +30,7 @@ install:
 clean:
 	rm -rf qubesappmenus/__pycache__
 	rm -rf qubesappmenusext/__pycache__
+	rm -rf qubesclipboard/__pycache__
 	rm -f .coverage
 	rm -rf debian/changelog.*
 	rm -rf pkgs

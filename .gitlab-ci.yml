@@ -9,8 +9,8 @@ checks:tests:
   - (cd ~/core-admin-client; if [ -f setup.py ]; then python3 setup.py egg_info; else python3 -m pip install --quiet --no-deps -e .; fi)
   script:
   - export PYTHONPATH=~/core-admin-client:~/linux-utils/imgconverter
-  - python3 -m pylint qubesappmenus
-  - python3 -m coverage run -m unittest -v qubesappmenus.tests
+  - python3 -m pylint qubesappmenus qubesclipboard
+  - python3 -m coverage run -m unittest -v qubesappmenus.tests qubesclipboard.tests
   stage: checks
 include:
 - file: /devel/gitlab-base.yml
