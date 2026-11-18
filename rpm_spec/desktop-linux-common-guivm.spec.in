@@ -1,0 +1,51 @@
+Name:		qubes-desktop-linux-common-guivm
+Version:	@VERSION@
+Release:	1%{?dist}
+Summary:	Desktop integration of a GUI domain
+
+Group:		Qubes
+Vendor:		Invisible Things Lab
+License:	GPL
+URL:		http://www.qubes-os.org
+Source0:	qubes-desktop-linux-common-%{version}.tar.gz
+
+BuildArch:	noarch
+BuildRequires:	make
+BuildRequires:	systemd-rpm-macros
+Requires:	python%{python3_pkgversion}-gobject-base
+Requires:	python%{python3_pkgversion}-qubesdb
+Requires:	qubes-core-qrexec-vm
+Requires:	systemd
+
+%description
+Forward shutdown, restart and suspend of a GUI domain's session to dom0.
+
+%prep
+%setup -q -n qubes-desktop-linux-common-%{version}
+
+%build
+
+%install
+make -C guivm DESTDIR=$RPM_BUILD_ROOT UNITDIR=%{_unitdir} install
+
+%post
+if [ -x /bin/systemctl ] && readlink /sbin/init | grep -q systemd; then
+    /bin/systemctl enable qubes-guivm-power-forward.service 2> /dev/null
+fi
+
+%preun
+if [ "$1" = 0 ] ; then
+    [ -x /bin/systemctl ] && /bin/systemctl disable qubes-guivm-power-forward.service
+fi
+
+%files
+/etc/qubes/suspend-pre.d/qubes-guivm-suspend.sh
+/etc/qubes/suspend-post.d/qubes-guivm-suspend.sh
+%{_unitdir}/qubes-guivm-power-forward.service
+%dir %{_unitdir}/systemd-suspend.service.d
+%{_unitdir}/systemd-suspend.service.d/30_qubes-guivm.conf
+/usr/lib/qubes/qubes-guivm-power-forward
+/usr/lib/qubes/qubes-guivm-suspend
+
+%changelog
+@CHANGELOG@

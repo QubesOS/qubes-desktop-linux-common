@@ -36,3 +36,14 @@ Description: Configuration and data files for the desktop menus
  This package contains the XML files that describe the menu layout for
  GNOME and KDE, and the .desktop files that define the names and icons
  of "subdirectories" in the menus.
+
+Package: qubes-desktop-linux-common-guivm
+Architecture: all
+Depends:
+ python3,
+ python3-gi,
+ python3-qubesdb,
+ qubes-core-qrexec,
+ ${misc:Depends}
+Description: Desktop integration of a GUI domain
+ Forward shutdown, restart and suspend of a GUI domain's session to dom0.
