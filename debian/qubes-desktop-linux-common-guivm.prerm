@@ -1,0 +1,8 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "remove" ]; then
+    deb-systemd-helper disable qubes-guivm-power-forward.service >/dev/null || :
+fi
+
+#DEBHELPER#

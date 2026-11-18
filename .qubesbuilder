@@ -6,6 +6,7 @@ vm:
   rpm:
     build:
     - rpm_spec/desktop-linux-common.spec
+    - rpm_spec/desktop-linux-common-guivm.spec
   deb:
     build:
     - debian

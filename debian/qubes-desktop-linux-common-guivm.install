@@ -1,0 +1,6 @@
+usr/lib/qubes/qubes-guivm-power-forward
+usr/lib/qubes/qubes-guivm-suspend
+usr/lib/systemd/system/qubes-guivm-power-forward.service
+usr/lib/systemd/system/systemd-suspend.service.d/30_qubes-guivm.conf
+etc/qubes/suspend-pre.d/qubes-guivm-suspend.sh
+etc/qubes/suspend-post.d/qubes-guivm-suspend.sh

@@ -11,6 +11,7 @@ checks:tests:
   - export PYTHONPATH=~/core-admin-client:~/linux-utils/imgconverter
   - python3 -m pylint qubesappmenus
   - python3 -m coverage run -m unittest -v qubesappmenus.tests
+  - python3 -m unittest discover -v -s guivm -p 'test_*.py'
   stage: checks
 include:
 - file: /devel/gitlab-base.yml

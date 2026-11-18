@@ -1,0 +1,8 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "configure" ]; then
+    deb-systemd-helper enable qubes-guivm-power-forward.service >/dev/null || :
+fi
+
+#DEBHELPER#
