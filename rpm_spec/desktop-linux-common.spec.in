@@ -22,8 +22,8 @@ BuildRequires: desktop-file-utils >= %{desktop_file_utils_version}
 Requires:	xdotool
 Requires:	xprop
 Requires:	python%{python3_pkgversion}-qubesimgconverter
-# for --force-root support
-Requires:	python%{python3_pkgversion}-qubesadmin >= 4.1.14
+# for defaults of refused feature reads
+Requires:	python%{python3_pkgversion}-qubesadmin >= 4.4.3
 Requires:	python%{python3_pkgversion}-pyxdg
 Requires:	xdg-utils
 
@@ -119,6 +119,8 @@ fi
 /etc/qubes-rpc/qubes.SyncAppMenus
 /etc/qubes-rpc/qubes.UpdateAppMenusFor
 /etc/qubes-rpc/qubes.RemoveAppMenusFor
+/etc/qubes-rpc/qubes.GetAppMenuTemplates
+%config(noreplace) /etc/qubes/policy.d/90-default-appmenus.policy
 /usr/share/qubes/icons/*.png
 /usr/share/icons/hicolor/scalable/apps/qubes-vm-settings.svg
 /usr/bin/qvm-sync-appmenus

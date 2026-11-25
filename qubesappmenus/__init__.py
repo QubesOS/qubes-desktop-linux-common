@@ -22,12 +22,16 @@
 
 """Handle menu entries for starting applications in qubes"""
 import contextlib
+import io
+import re
 import subprocess
 import sys
 import os
 import os.path
 import shutil
 import logging
+import tarfile
+import tempfile
 
 import itertools
 import importlib.resources
@@ -41,6 +45,8 @@ import qubesadmin.vm
 import qubesimgconverter
 
 basedir = os.path.join(xdg.BaseDirectory.xdg_data_home, 'qubes-appmenus')
+qubes_base_dir = '/var/lib/qubes'
+template_file_re = re.compile(r"\A[a-zA-Z0-9_-][a-zA-Z0-9._-]*\Z")
 
 def vm_name_escape(vm_name: str) -> str:
     """Escape a VM name for use in a .desktop file name"""
@@ -72,9 +78,64 @@ class AppmenusSubdirs:
 class Appmenus(object):
     """Main class for menu entries handling"""
 
+    def __init__(self):
+        self._fetched = set()
+
     qubes_vm_desktop = 'org.qubes-os.vm'
     qubes_dispvm_desktop = 'org.qubes-os.dispvm'
     qubes_vm_desktop_settings = 'org.qubes-os.qubes-vm-settings'
+
+    @staticmethod
+    def store_dir(vm):
+        """
+        Directory of a qube in dom0, keeping its menu templates
+        """
+        subdir = 'vm-templates' if vm.klass == 'TemplateVM' else 'appvms'
+        return os.path.join(qubes_base_dir, subdir, vm.name)
+
+    def source_dir(self, vm):
+        """
+        Directory with the menu templates and icons of a qube
+        """
+        if vm.app.local_name == 'dom0':
+            store = self.store_dir(vm)
+            if os.path.isdir(os.path.join(store,
+                    AppmenusSubdirs.templates_subdir)):
+                return store
+        else:
+            self.fetch_templates(vm)
+        return os.path.join(basedir, vm.name)
+
+    def fetch_templates(self, vm):
+        """
+        Refresh the local menu templates and icons of a qube from dom0
+        """
+        if vm.name in self._fetched:
+            return
+        self._fetched.add(vm.name)
+        dest = os.path.join(basedir, vm.name)
+        try:
+            proc = vm.app.run_service(
+                'dom0', 'qubes.GetAppMenuTemplates+' + vm.name,
+                stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL)
+            data, _ = proc.communicate()
+            if proc.returncode != 0:
+                raise qubesadmin.exc.QubesException(
+                    'Failed to get menu templates of {}'.format(vm.name))
+            os.makedirs(dest, exist_ok=True)
+            with tempfile.TemporaryDirectory(dir=dest, prefix='.fetch-') \
+                    as tmp:
+                extract_templates(io.BytesIO(data), tmp)
+                for subdir in (AppmenusSubdirs.templates_subdir,
+                               AppmenusSubdirs.template_icons_subdir):
+                    path = os.path.join(dest, subdir)
+                    if os.path.exists(path):
+                        os.rename(path, os.path.join(tmp, subdir + '.old'))
+                    os.rename(os.path.join(tmp, subdir), path)
+        except (OSError, tarfile.TarError,
+                qubesadmin.exc.QubesException) as e:
+            vm.log.debug('Using local menu templates of %s: %s', vm.name, e)
 
     def templates_dirs(self, vm, template=None):
         """
@@ -83,7 +144,7 @@ class Appmenus(object):
         :type template: qubes.vm.qubesvm.QubesVM
         """
         dirs = []
-        my_dir = os.path.join(basedir, vm.name,
+        my_dir = os.path.join(self.source_dir(vm),
                               AppmenusSubdirs.templates_subdir)
         dirs.append(my_dir)
         if template:
@@ -95,7 +156,7 @@ class Appmenus(object):
     def template_icons_dirs(self, vm):
         """Directory for not yet colore icons"""
         dirs = []
-        my_dir = os.path.join(basedir, vm.name,
+        my_dir = os.path.join(self.source_dir(vm),
                               AppmenusSubdirs.template_icons_subdir)
         dirs.append(my_dir)
         if hasattr(vm, 'template'):
@@ -220,6 +281,13 @@ class Appmenus(object):
                             field_values[field_name] = value
             if name is None:
                 continue
+            icon = field_values.get('Icon', '')
+            prefix = '%VMDIR%/' + AppmenusSubdirs.icons_subdir + '/'
+            if icon.startswith(prefix):
+                field_values['Icon'] = os.path.join(
+                    os.path.dirname(os.path.dirname(filename)),
+                    AppmenusSubdirs.template_icons_subdir,
+                    icon[len(prefix):])
             result = [os.path.basename(filename), name]
             if fields:
                 for field in fields:
@@ -607,15 +675,13 @@ class Appmenus(object):
                 src = vm.template
             except AttributeError:
                 pass
-        own_templates_dir = os.path.join(prefix_dir,
+        own_templates_dir = os.path.join(self.source_dir(vm),
                                          AppmenusSubdirs.templates_subdir)
         own_template_icons_dir = os.path.join(
-            prefix_dir, AppmenusSubdirs.template_icons_subdir)
+            self.source_dir(vm), AppmenusSubdirs.template_icons_subdir)
         if src is None:
             os.makedirs(own_templates_dir, exist_ok=True)
-            os.makedirs(os.path.join(prefix_dir,
-                                     AppmenusSubdirs.template_icons_subdir),
-                        exist_ok=True)
+            os.makedirs(own_template_icons_dir, exist_ok=True)
 
             vm.log.info("Creating appmenus directory: {0}".format(
                 own_templates_dir))
@@ -627,14 +693,17 @@ class Appmenus(object):
                 qubes_start_f.write(data)
 
         source_whitelist_filename = 'vm-' + AppmenusSubdirs.whitelist
-        if src and ('default-menu-items' in src.features or os.path.exists(
+        default_menu_items = None
+        if src:
+            default_menu_items = src.features.get_if_allowed(
+                'default-menu-items')
+        if default_menu_items is not None or (src and os.path.exists(
                 os.path.join(prefix_dir, source_whitelist_filename))):
             vm.log.info("Creating default whitelisted apps list: {0}".
                         format(prefix_dir + '/' + AppmenusSubdirs.whitelist))
             if 'menu-items' not in vm.features:
-                if 'default-menu-items' in src.features:
-                    vm.features['menu-items'] = \
-                        src.features['default-menu-items']
+                if default_menu_items is not None:
+                    vm.features['menu-items'] = default_menu_items
                 else:
                     self.set_whitelist(vm, retrieve_list(os.path.join(
                         prefix_dir, source_whitelist_filename)))
@@ -778,6 +847,10 @@ parser.add_argument(
          'for VMs based on this template'
 )
 parser.add_argument(
+    '--export-templates', action='store_true',
+    help='Write a tar archive of the menu templates and icons of the qube '
+         'to stdout, for the qubes.GetAppMenuTemplates service in dom0')
+parser.add_argument(
     '--source', action='store', default=None,
     help='Source VM to copy data from (for --init option)')
 parser.add_argument(
@@ -802,6 +875,71 @@ parser.add_argument(
 parser.add_argument(
     'domains', metavar='VMNAME', nargs='*', default=[],
     help='VMs on which perform requested actions')
+
+
+def extract_templates(stream, dest):
+    """
+    Extract menu templates and icons of a qube from a tar archive
+    """
+    subdirs = (AppmenusSubdirs.templates_subdir,
+               AppmenusSubdirs.template_icons_subdir)
+    for subdir in subdirs:
+        os.makedirs(os.path.join(dest, subdir), exist_ok=True)
+    with tarfile.open(fileobj=stream, mode='r|') as tar:
+        for member in tar:
+            path = member.name.rstrip('/').split('/')
+            if member.isdir() and len(path) == 1 and path[0] in subdirs:
+                continue
+            if not member.isfile() or len(path) != 2 \
+                    or path[0] not in subdirs \
+                    or not template_file_re.match(path[1]):
+                raise qubesadmin.exc.QubesException(
+                    'Invalid archive entry: {!r}'.format(member.name))
+            with tar.extractfile(member) as f_src, \
+                    open(os.path.join(dest, *path), 'wb') as f_dst:
+                shutil.copyfileobj(f_src, f_dst)
+
+
+def templates_archive(source):
+    """
+    Tar archive of the menu templates and icons in a directory
+    """
+    data = io.BytesIO()
+    with tarfile.open(fileobj=data, mode='w') as tar:
+        for subdir in (AppmenusSubdirs.templates_subdir,
+                       AppmenusSubdirs.template_icons_subdir):
+            path = os.path.join(source, subdir)
+            if not os.path.isdir(path):
+                continue
+            for name in sorted(os.listdir(path)):
+                file_path = os.path.join(path, name)
+                if os.path.islink(file_path) \
+                        or not os.path.isfile(file_path) \
+                        or not template_file_re.match(name):
+                    continue
+                info = tar.gettarinfo(file_path, arcname=subdir + '/' + name)
+                info.uid = info.gid = 0
+                info.uname = info.gname = ''
+                with open(file_path, 'rb') as template_file:
+                    tar.addfile(info, template_file)
+    return data.getvalue()
+
+
+def templates_allowed(vm, caller):
+    """
+    Whether caller is or shows vm or a qube based on it
+    """
+    if caller in (None, 'dom0'):
+        return True
+    for qube in vm.app.domains:
+        guivm = getattr(qube, 'guivm', None)
+        if qube.name != caller and (guivm is None or guivm.name != caller):
+            continue
+        while qube is not None:
+            if qube.name == vm.name:
+                return True
+            qube = getattr(qube, 'template', None)
+    return False
 
 
 def retrieve_list(path):
@@ -860,6 +998,15 @@ def main(args=None, app=None):
                     vm = args.app.domains[vm]
                 except KeyError:
                     parser.error("'{0}' is not an existing qube".format(vm))
+            if args.export_templates:
+                caller = os.environ.get('QREXEC_REMOTE_DOMAIN')
+                if args.app.local_name != 'dom0' \
+                        or not templates_allowed(vm, caller):
+                    parser.error("Cannot give menu templates of '{}' to "
+                                 "'{}'".format(vm.name, caller))
+                sys.stdout.buffer.write(
+                    templates_archive(appmenus.source_dir(vm)))
+                sys.stdout.buffer.flush()
             if args.init:
                 appmenus.appmenus_init(vm, src=args.source)
             if args.get_whitelist:

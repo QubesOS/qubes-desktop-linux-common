@@ -22,9 +22,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
 # USA.
 
+import asyncio
 import io
 import os
 import shutil
+import tarfile
 import tempfile
 import sys
 import types
@@ -34,6 +36,8 @@ import unittest.mock
 
 import logging
 import importlib.resources
+import qubesadmin.exc
+import qubesadmin.features
 import qubesappmenus
 import qubesappmenus.receive
 
@@ -68,9 +72,14 @@ class Label(object):
 
 class TestApp(object):
     labels = {1: Label(1, '0xcc0000', 'red')}
+    local_name = 'dom0'
 
     def __init__(self):
         self.domains = {}
+
+class TestDomains(dict):
+    def __iter__(self):
+        return iter(self.values())
 
 class TestVMM(object):
     offline_mode = False
@@ -83,6 +92,9 @@ class TestFeatures(dict):
     def __init__(self, vm, **kwargs) -> None:
         self.vm = vm
         super().__init__(**kwargs)
+
+    def get_if_allowed(self, feature, default=None):
+        return self.get(feature, default)
 
     def check_with_template(self, feature, default=None):
         if feature in self:
@@ -170,12 +182,19 @@ class TC_00_Appmenus(unittest.TestCase):
         self.basedir_patch = unittest.mock.patch('qubesappmenus.basedir',
             self.basedir)
         self.basedir_patch.start()
+        self.store_obj = tempfile.TemporaryDirectory()
+        self.store = self.store_obj.name
+        self.store_patch = unittest.mock.patch(
+            'qubesappmenus.qubes_base_dir', self.store)
+        self.store_patch.start()
 
     def _make_desktop_name(self, vm, appmenu_basename):
         return os.path.join(self.ext.appmenus_dir(vm),
                             self.ext.desktop_name(vm, appmenu_basename))
 
     def tearDown(self):
+        self.store_patch.stop()
+        self.store_obj.cleanup()
         self.basedir_patch.stop()
         self.basedir_obj.cleanup()
         super(TC_00_Appmenus, self).tearDown()
@@ -1013,6 +1032,308 @@ class TC_00_Appmenus(unittest.TestCase):
             self.assertFalse(os.path.exists(menus_dir))
         finally:
             shutil.rmtree(config_dir)
+
+
+    def _prepare_store(self, vm):
+        store = self.ext.store_dir(vm)
+        for subdir in ('apps.templates', 'apps.tempicons'):
+            os.makedirs(os.path.join(store, subdir))
+        return store
+
+    def test_150_templates_in_qube_directory(self):
+        tpl_store = self._prepare_store(self.template)
+        self.assertEqual(tpl_store,
+            os.path.join(self.store, 'vm-templates', 'test-template'))
+        self.assertEqual(self.ext.templates_dirs(self.appvm), [
+            os.path.join(self.basedir, 'test-vm', 'apps.templates'),
+            os.path.join(tpl_store, 'apps.templates'),
+        ])
+        vm_store = self._prepare_store(self.appvm)
+        self.assertEqual(vm_store,
+            os.path.join(self.store, 'appvms', 'test-vm'))
+        self.assertEqual(self.ext.template_icons_dirs(self.appvm), [
+            os.path.join(vm_store, 'apps.tempicons'),
+            os.path.join(tpl_store, 'apps.tempicons'),
+        ])
+
+    def test_151_sync_writes_qube_directory(self):
+        store = self._prepare_store(self.template)
+        qubesappmenus.receive.process_appmenus_templates(self.ext,
+            self.template, {'evince': {'Name': 'Document Viewer',
+                                       'Exec': 'evince'}})
+        self.assertPathExists(
+            os.path.join(store, 'apps.templates', 'evince.desktop'))
+        self.assertPathNotExists(
+            os.path.join(self.basedir, 'test-template', 'apps.templates'))
+
+    def test_152_init_in_qube_directory(self):
+        store = self._prepare_store(self.standalone)
+        self.ext.appmenus_init(self.standalone)
+        self.assertPathExists(
+            os.path.join(store, 'apps.templates', 'qubes-start.desktop'))
+        clone = TestVM(name='test-clone', klass='StandaloneVM')
+        clone_store = self._prepare_store(clone)
+        with open(os.path.join(store, 'apps.tempicons', 'xterm.png'),
+                'wb') as f:
+            f.write(b'png')
+        self.ext.appmenus_init(clone, src=self.standalone)
+        self.assertEqual(
+            os.listdir(os.path.join(clone_store, 'apps.templates')),
+            ['qubes-start.desktop'])
+        self.assertEqual(
+            os.listdir(os.path.join(clone_store, 'apps.tempicons')),
+            ['xterm.png'])
+
+    def test_153_prepare_qube_directory(self):
+        home = os.path.join(self.basedir, 'home')
+        old_dir = os.path.join(home, '.local', 'share', 'qubes-appmenus',
+            'test-template', 'apps.templates')
+        os.makedirs(old_dir)
+        with open(os.path.join(old_dir, 'evince.desktop'), 'wb') as f:
+            f.write(b'[Desktop Entry]\n')
+        dir_path = os.path.join(self.store, 'vm-templates', 'test-template')
+        os.makedirs(dir_path)
+        vm = TestVM(name='test-template', klass='TemplateVM',
+            dir_path=dir_path)
+        ext = qubesappmenusext.AppmenusExtension()
+        group = types.SimpleNamespace(gr_mem=['user'], gr_gid=os.getgid())
+        user = types.SimpleNamespace(pw_dir=home, pw_uid=os.getuid())
+        with unittest.mock.patch('grp.getgrnam', return_value=group), \
+                unittest.mock.patch('pwd.getpwnam', return_value=user):
+            ext.on_domain_load(vm, 'domain-load')
+            for subdir in ('apps.templates', 'apps.tempicons'):
+                self.assertEqual(
+                    os.stat(os.path.join(dir_path, subdir)).st_mode & 0o7777,
+                    0o2775)
+            migrated = os.path.join(dir_path, 'apps.templates',
+                'evince.desktop')
+            with open(migrated, 'rb') as f:
+                self.assertEqual(f.read(), b'[Desktop Entry]\n')
+            # Migrated once only
+            os.unlink(migrated)
+            ext.on_domain_load(vm, 'domain-load')
+            self.assertPathNotExists(migrated)
+            ext.on_domain_load(TestVM(name='dom0', klass='AdminVM',
+                dir_path=None), 'domain-load')
+
+    def _templates_tar(self, files, links=()):
+        data = io.BytesIO()
+        with tarfile.open(fileobj=data, mode='w') as tar:
+            for name, content in files.items():
+                info = tarfile.TarInfo(name)
+                info.size = len(content)
+                tar.addfile(info, io.BytesIO(content))
+            for name, target in links:
+                info = tarfile.TarInfo(name)
+                info.type = tarfile.SYMTYPE
+                info.linkname = target
+                tar.addfile(info)
+        return data.getvalue()
+
+    def _guivm_app(self, archives):
+        app = TestApp()
+        app.local_name = 'test-guivm'
+        calls = []
+
+        def run_service(dest, service, **kwargs):
+            calls.append((dest, service))
+            data = archives.get(service.split('+', 1)[1])
+            return types.SimpleNamespace(
+                communicate=lambda: (data or b'', b''),
+                returncode=0 if data is not None else 1)
+
+        app.run_service = run_service
+        return app, calls
+
+    def test_160_guivm_gets_templates_from_dom0(self):
+        app, calls = self._guivm_app({
+            'test-vm': self._templates_tar({}),
+            'test-template': self._templates_tar({
+                'apps.templates/evince.desktop': b'[Desktop Entry]\n',
+                'apps.tempicons/evince.png': b'png'}),
+        })
+        template = TestVM(name='test-template', klass='TemplateVM', app=app)
+        appvm = TestVM(name='test-vm', klass='AppVM', app=app,
+            template=template)
+        dirs = self.ext.templates_dirs(appvm)
+        self.assertEqual([os.listdir(d) for d in dirs],
+            [[], ['evince.desktop']])
+        icons = self.ext.template_icons_dirs(appvm)
+        self.assertEqual(os.listdir(icons[1]), ['evince.png'])
+        self.assertEqual(calls, [
+            ('dom0', 'qubes.GetAppMenuTemplates+test-vm'),
+            ('dom0', 'qubes.GetAppMenuTemplates+test-template'),
+        ])
+        # kept where qubes-manager looks for icons, refreshed at each run
+        self.assertEqual(dirs[1], os.path.join(self.basedir, 'test-template',
+            'apps.templates'))
+        app.run_service = self._guivm_app({
+            'test-template': self._templates_tar({
+                'apps.templates/xterm.desktop': b'[Desktop Entry]\n'}),
+        })[0].run_service
+        dirs = qubesappmenus.Appmenus().templates_dirs(appvm)
+        self.assertEqual(os.listdir(dirs[1]), ['xterm.desktop'])
+        self.assertEqual(sorted(os.listdir(os.path.join(self.basedir,
+            'test-template'))), ['apps.tempicons', 'apps.templates'])
+
+    def test_161_guivm_falls_back_to_local_templates(self):
+        app, calls = self._guivm_app({})
+        appvm = TestVM(name='test-vm', klass='AppVM', app=app)
+        self.assertEqual(self.ext.source_dir(appvm),
+            os.path.join(self.basedir, 'test-vm'))
+        self.assertEqual(calls, [
+            ('dom0', 'qubes.GetAppMenuTemplates+test-vm')])
+
+    def test_162_extract_invalid_templates(self):
+        for files, links in (
+                ({'../bad.desktop': b''}, ()),
+                ({'apps.templates/../../bad.desktop': b''}, ()),
+                ({'/apps.templates/bad.desktop': b''}, ()),
+                ({'apps/bad.desktop': b''}, ()),
+                ({'apps.templates/sub/bad.desktop': b''}, ()),
+                ({'apps.templates/.hidden': b''}, ()),
+                ({}, (('apps.templates/bad.desktop', '/etc/passwd'),)),
+        ):
+            with self.subTest(files=files, links=links), \
+                    tempfile.TemporaryDirectory() as dest:
+                with self.assertRaises(qubesadmin.exc.QubesException):
+                    qubesappmenus.extract_templates(
+                        io.BytesIO(self._templates_tar(files, links)), dest)
+                self.assertEqual(sorted(os.listdir(dest)),
+                    ['apps.tempicons', 'apps.templates'])
+
+    def test_163_templates_given_to_their_guivm_only(self):
+        app = TestApp()
+        guivm = TestVM(name='test-guivm', klass='AppVM', app=app)
+        other = TestVM(name='test-other', klass='AppVM', app=app)
+        template = TestVM(name='test-template', klass='TemplateVM', app=app,
+            guivm=None)
+        dvm = TestVM(name='test-dvm', klass='AppVM', app=app,
+            template=template, guivm=other)
+        dispvm = TestVM(name='test-disp', klass='DispVM', app=app,
+            template=dvm, guivm=guivm)
+        app.domains = TestDomains((vm.name, vm) for vm in
+            (guivm, other, template, dvm, dispvm))
+        allowed = qubesappmenus.templates_allowed
+        for vm in (dispvm, dvm, template):
+            self.assertTrue(allowed(vm, 'test-guivm'))
+            self.assertTrue(allowed(vm, 'dom0'))
+        self.assertTrue(allowed(dvm, 'test-other'))
+        self.assertFalse(allowed(dispvm, 'test-other'))
+        self.assertFalse(allowed(template, 'test-unknown'))
+
+    def test_165_own_templates(self):
+        app = TestApp()
+        template = TestVM(name='test-gui-template', klass='TemplateVM',
+            app=app, guivm=None)
+        guivm = TestVM(name='test-guivm', klass='AppVM', app=app,
+            template=template, guivm=None)
+        other = TestVM(name='test-other', klass='AppVM', app=app, guivm=None)
+        app.domains = TestDomains((vm.name, vm) for vm in
+            (template, guivm, other))
+        allowed = qubesappmenus.templates_allowed
+        self.assertTrue(allowed(guivm, 'test-guivm'))
+        self.assertTrue(allowed(template, 'test-guivm'))
+        self.assertFalse(allowed(guivm, 'test-other'))
+        self.assertFalse(allowed(template, 'test-other'))
+        self.assertFalse(allowed(other, 'test-guivm'))
+
+    def test_166_available_icon_path(self):
+        store = self._prepare_store(self.template)
+        with open(os.path.join(store, 'apps.templates', 'evince.desktop'),
+                'w', encoding='utf-8') as f:
+            f.write('[Desktop Entry]\nName=%VMNAME%: Document Viewer\n'
+                    'Icon=%VMDIR%/apps.icons/evince.png\n')
+        available = list(self.ext.get_available(self.appvm, fields=['Icon']))
+        self.assertEqual(available, [['evince.desktop', 'Document Viewer',
+            os.path.join(store, 'apps.tempicons', 'evince.png')]])
+
+    def test_164_export_templates(self):
+        store = self._prepare_store(self.template)
+        with open(os.path.join(store, 'apps.templates', 'evince.desktop'),
+                'wb') as f:
+            f.write(b'[Desktop Entry]\n')
+        os.symlink('/etc/passwd',
+            os.path.join(store, 'apps.templates', 'bad.desktop'))
+        self.app.domains['test-template'] = self.template
+        for caller in ('dom0', 'test-guivm'):
+            stdout = io.TextIOWrapper(io.BytesIO())
+            with self.subTest(caller=caller), \
+                    unittest.mock.patch('sys.stdout', stdout), \
+                    unittest.mock.patch.dict(os.environ,
+                        {'QREXEC_REMOTE_DOMAIN': caller}), \
+                    unittest.mock.patch('qubesappmenus.templates_allowed',
+                        return_value=caller == 'dom0'):
+                if caller == 'dom0':
+                    qubesappmenus.main(['--force-root', '--export-templates',
+                        'test-template'], app=self.app)
+                    with tempfile.TemporaryDirectory() as dest:
+                        qubesappmenus.extract_templates(
+                            io.BytesIO(stdout.buffer.getvalue()), dest)
+                        self.assertEqual(os.listdir(
+                            os.path.join(dest, 'apps.templates')),
+                            ['evince.desktop'])
+                else:
+                    with self.assertRaises(SystemExit):
+                        qubesappmenus.main(['--force-root',
+                            '--export-templates', 'test-template'],
+                            app=self.app)
+                    self.assertEqual(stdout.buffer.getvalue(), b'')
+
+    def test_181_create_sets_default_menu_items(self):
+        self.template.features['default-menu-items'] = 'a.desktop b.desktop'
+        for menu_items, expected in ((None, 'a.desktop b.desktop'),
+                                     ('c.desktop', 'c.desktop'),
+                                     ('', '')):
+            with self.subTest(menu_items=menu_items):
+                vm = TestVM(name='test-new', klass='AppVM',
+                    template=self.template)
+                if menu_items is not None:
+                    vm.features['menu-items'] = menu_items
+                ext = qubesappmenusext.AppmenusExtension()
+                with unittest.mock.patch.object(ext, 'update_appmenus') \
+                        as update_appmenus:
+                    asyncio.run(ext.create_on_disk(vm, None))
+                self.assertEqual(vm.features['menu-items'], expected)
+                update_appmenus.assert_called_once_with(vm)
+        del self.template.features['default-menu-items']
+        vm = TestVM(name='test-new', klass='AppVM', template=self.template)
+        standalone = TestVM(name='test-standalone2', klass='StandaloneVM')
+        for qube in (vm, standalone):
+            ext = qubesappmenusext.AppmenusExtension()
+            with unittest.mock.patch.object(ext, 'update_appmenus'):
+                asyncio.run(ext.create_on_disk(qube, None))
+            self.assertNotIn('menu-items', qube.features)
+
+    @unittest.mock.patch('subprocess.check_call')
+    def test_182_menu_without_template_access(self, mock_subprocess):
+        template = TestVM(name='test-template', klass='TemplateVM')
+        template.qubesd_call = unittest.mock.Mock(
+            side_effect=qubesadmin.exc.QubesDaemonAccessError('Refused'))
+        template.features = qubesadmin.features.Features(template)
+        evince_data = importlib.resources.files(__package__).joinpath(
+            'test-data/evince.desktop.template').read_bytes()
+        store = self._prepare_store(template)
+        with open(os.path.join(store, 'apps.templates', 'evince.desktop'),
+                'wb') as f:
+            f.write(evince_data)
+        appvm = TestVM(name='test-vm', klass='AppVM', template=template,
+            virt_mode='pvh', updateable=False, provides_network=False,
+            label=self.app.labels[1])
+        self.ext.appmenus_init(appvm)
+        self.assertNotIn('menu-items', appvm.features)
+        appvm.features['menu-items'] = 'evince.desktop'
+        self.ext.appmenus_create(appvm, refresh_cache=False)
+        self.assertPathExists(
+            self._make_desktop_name(appvm, 'evince.desktop'))
+
+    def test_183_no_default_user(self):
+        group = types.SimpleNamespace(gr_mem=[], gr_gid=os.getgid())
+        ext = qubesappmenusext.AppmenusExtension()
+        with unittest.mock.patch('grp.getgrnam', return_value=group), \
+                unittest.mock.patch('asyncio.create_subprocess_exec') as run:
+            asyncio.run(ext.run_as_user(['qvm-appmenus', '--help']))
+        run.assert_not_called()
 
 
 def list_tests():
