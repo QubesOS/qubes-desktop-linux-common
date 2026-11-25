@@ -179,6 +179,13 @@ class AppmenusExtension(qubes.ext.Extension):
     @qubes.ext.handler('domain-clone-files')
     async def clone_disk_files(self, vm, event, src):
         self.prepare_store(vm)
+        guivm = getattr(vm, 'guivm', None)
+        if guivm and guivm.klass != 'AdminVM':
+            await self.run_as_user(
+                ['qvm-appmenus', '--quiet', '--init', '--source=' + src.name,
+                vm.name])
+            await self.update_appmenus(vm)
+            return
         await self.run_as_user(
             ['qvm-appmenus', '--quiet', '--init', '--create', '--source=' + src.name,
             vm.name])
@@ -304,25 +311,42 @@ class AppmenusExtension(qubes.ext.Extension):
             self.vm_tasks[vm.name].append(
                 asyncio.ensure_future(self.remove_appmenus(vm.name, vm.guivm)))
 
+    async def update_pending(self, vm):
+        """
+        Update menus queued for GUI VM vm
+        """
+        pending_update = vm.features.get('menu-update-pending-for', '').split()
+        if not pending_update:
+            return
+        # please no async code between those two calls
+        del vm.features['menu-update-pending-for']
+        vm.log.info("Processing pending menu updates")
+        for to_update in pending_update:
+            if to_update not in vm.app.domains:
+                # removed in the meantime, and should be handled
+                # by pending removals
+                continue
+            await self.update_appmenus(vm.app.domains[to_update])
+
+    @qubes.ext.handler('domain-feature-set:menu-update-pending-for')
+    def on_feature_set_menu_update_pending(self, vm, event, feature,
+            value, oldvalue=None):
+        if vm.app.vmm.offline_mode or not vm.is_running():
+            return
+        self.collect_done_tasks(vm)
+        self.vm_tasks[vm.name].append(
+            asyncio.ensure_future(self.update_pending(vm)))
+
     @qubes.ext.handler('domain-start')
     async def on_domain_start(self, vm, event, **kwargs):
         """Process queued menu updates"""
         pending_remove = vm.features.get('menu-remove-pending-for', '').split()
-        pending_update = vm.features.get('menu-update-pending-for', '').split()
         if pending_remove:
             vm.log.info("Processing pending menu removals")
             for to_remove in pending_remove:
                 await self.remove_appmenus(to_remove, guivm=vm)
             del vm.features['menu-remove-pending-for']
-        if pending_update:
-            vm.log.info("Processing pending menu updates")
-            for to_update in pending_update:
-                if to_update not in vm.app.domains:
-                    # removed in the meantime, and should be handled
-                    # by the loop above
-                    continue
-                await self.update_appmenus(vm.app.domains[to_update])
-            del vm.features['menu-update-pending-for']
+        await self.update_pending(vm)
 
     @qubes.ext.handler('domain-shutdown')
     async def on_domain_shutdown(self, vm, event, **kwargs):

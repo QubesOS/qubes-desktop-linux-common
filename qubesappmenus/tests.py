@@ -1280,6 +1280,92 @@ class TC_00_Appmenus(unittest.TestCase):
                             app=self.app)
                     self.assertEqual(stdout.buffer.getvalue(), b'')
 
+    def test_170_queue_guivm_updates_after_sync(self):
+        app = TestApp()
+        app.local_name = 'dom0'
+        dom0 = TestVM(name='dom0', klass='AdminVM', app=app)
+        guivm = TestVM(name='test-guivm', klass='AppVM', app=app)
+        guivm.features['menu-update-pending-for'] = 'test-other test-vm'
+        guivm2 = TestVM(name='test-guivm2', klass='AppVM', app=app)
+        dispvm = TestVM(name='test-disp', klass='DispVM', app=app,
+            guivm=guivm2, appvms=[])
+        dvm = TestVM(name='test-dvm', klass='AppVM', app=app,
+            guivm=guivm, appvms=[dispvm])
+        appvm = TestVM(name='test-vm', klass='AppVM', app=app,
+            guivm=guivm, appvms=[])
+        local = TestVM(name='test-local', klass='AppVM', app=app,
+            guivm=dom0, appvms=[])
+        template = TestVM(name='test-template', klass='TemplateVM', app=app,
+            guivm=dom0, appvms=[appvm, local, dvm])
+        app.domains = {vm.name: vm for vm in
+            (dom0, guivm, guivm2, dispvm, dvm, appvm, local, template)}
+        qubesappmenus.receive.queue_guivm_updates(template)
+        self.assertEqual(guivm.features['menu-update-pending-for'],
+            'test-other test-vm test-dvm')
+        self.assertEqual(guivm2.features['menu-update-pending-for'],
+            'test-disp')
+        self.assertNotIn('menu-update-pending-for', dom0.features)
+
+    def test_171_pending_updates_while_guivm_runs(self):
+        ext = qubesappmenusext.AppmenusExtension()
+        guivm = TestVM(name='test-guivm', klass='AppVM',
+            app=TestAppmenusExtApp())
+        for running in (False, True):
+            guivm.running = running
+            with self.subTest(running=running), \
+                    unittest.mock.patch.object(ext, 'update_pending',
+                        unittest.mock.Mock(return_value='update-task')), \
+                    unittest.mock.patch('asyncio.ensure_future') \
+                        as ensure_future:
+                ext.on_feature_set_menu_update_pending(guivm, None,
+                    'menu-update-pending-for', 'test-vm')
+                if running:
+                    ensure_future.assert_called_once_with('update-task')
+                else:
+                    ensure_future.assert_not_called()
+
+    def test_172_update_pending(self):
+        app = TestApp()
+        app.domains = {'test-vm': self.appvm}
+        guivm = TestVM(name='test-guivm', klass='AppVM', app=app)
+        guivm.features['menu-update-pending-for'] = 'test-vm test-gone'
+        ext = qubesappmenusext.AppmenusExtension()
+        updated = []
+
+        async def update_appmenus(vm):
+            # Taken before the updates run
+            self.assertNotIn('menu-update-pending-for', guivm.features)
+            updated.append(vm.name)
+
+        with unittest.mock.patch.object(ext, 'update_appmenus',
+                side_effect=update_appmenus):
+            asyncio.run(ext.update_pending(guivm))
+        self.assertEqual(updated, ['test-vm'])
+
+
+    def test_180_clone_menu_in_its_guivm(self):
+        src = TestVM(name='test-src', klass='AppVM', template=self.template)
+        for guivm, create in (
+                (TestVM(name='test-guivm', klass='AppVM'), False),
+                (TestVM(name='dom0', klass='AdminVM'), True)):
+            with self.subTest(klass=guivm.klass):
+                clone = TestVM(name='test-clone', klass='AppVM',
+                    template=self.template, guivm=guivm)
+                ext = qubesappmenusext.AppmenusExtension()
+                with unittest.mock.patch.object(ext, 'run_as_user') \
+                            as run_as_user, \
+                        unittest.mock.patch.object(ext, 'update_appmenus') \
+                            as update_appmenus:
+                    asyncio.run(ext.clone_disk_files(clone, None, src))
+                command = run_as_user.call_args.args[0]
+                self.assertIn('--init', command)
+                self.assertIn('--source=test-src', command)
+                self.assertEqual('--create' in command, create)
+                if create:
+                    update_appmenus.assert_not_called()
+                else:
+                    update_appmenus.assert_called_once_with(clone)
+
     def test_181_create_sets_default_menu_items(self):
         self.template.features['default-menu-items'] = 'a.desktop b.desktop'
         for menu_items, expected in ((None, 'a.desktop b.desktop'),

@@ -389,6 +389,25 @@ def retrieve_appmenus_templates(vm, use_stdin=True):
     return new_appmenus
 
 
+def queue_guivm_updates(vm):
+    """
+    Queue menu updates of vm and qubes based on it in other GUI VMs
+    """
+    pending = {}
+    todo = [vm]
+    while todo:
+        qube = todo.pop(0)
+        guivm = getattr(qube, 'guivm', None)
+        if guivm is not None and guivm.name != vm.app.local_name:
+            pending.setdefault(guivm.name, []).append(qube.name)
+        todo.extend(getattr(qube, 'appvms', ()))
+    for guivm_name, names in pending.items():
+        guivm = vm.app.domains[guivm_name]
+        queue = guivm.features.get('menu-update-pending-for', '').split()
+        guivm.features['menu-update-pending-for'] = ' '.join(
+            queue + [name for name in names if name not in queue])
+
+
 def main(args=None):
     '''Main function of qvm-sync-appmenus tool'''
     env_vmname = os.environ.get("QREXEC_REMOTE_DOMAIN")
@@ -420,3 +439,5 @@ def main(args=None):
         else:
             process_appmenus_templates(appmenusext, vm, new_appmenus)
     appmenusext.appmenus_update(vm)
+    if vm.app.local_name == 'dom0':
+        queue_guivm_updates(vm)
