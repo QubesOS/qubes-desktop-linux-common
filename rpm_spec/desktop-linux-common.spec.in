@@ -71,6 +71,16 @@ make -C doc DESTDIR=$RPM_BUILD_ROOT MANDIR=%{_mandir} PYTHON=%{__python3} instal
 make -C wayland-config DESTDIR=$RPM_BUILD_ROOT install
 
 %post
+if [ "$1" -gt 1 ] ; then
+    # Remove icons no longer shipped
+    for i in dom0-update-avail netvm template ; do
+        xdg-icon-resource uninstall --noupdate --size 48 $i
+    done
+    for i in black blue gray green orange purple red yellow ; do
+        xdg-icon-resource uninstall --noupdate --size 48 $i
+        xdg-icon-resource uninstall --noupdate --size 48 dispvm-$i
+    done
+fi
 for i in /usr/share/qubes/icons/*.png ; do
     xdg-icon-resource install --noupdate --novendor --size 48 $i
 done
