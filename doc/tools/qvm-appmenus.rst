@@ -53,7 +53,10 @@ OPTIONS
     The applications are listed as hyphen-separated pairs consisting of file name and application name.
 
 --file-field FIELDNAME
-    .desktop file field to append to output for --get-available; can be used multiple times for multiple fields. This option changes output format to pipe-("|") separated.
+    .desktop file field to append to output for --get-available; can be used multiple times for multiple fields. This option changes output format to pipe-("|") separated. An Icon field is given as the path of the icon file.
+
+--export-templates
+    Write a tar archive of the menu templates and icons of the VM to standard output, for the qubes.GetAppMenuTemplates service. Only in dom0, and only for a caller that is or shows the VM or a VM based on it.
 
 AUTHORS
 =======

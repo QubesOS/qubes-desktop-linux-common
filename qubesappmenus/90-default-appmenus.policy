@@ -1,0 +1,6 @@
+## Do not modify this file, create a new policy file with a lower number in the
+## filename instead. For example `30-user.policy`.
+
+## qvm-appmenus checks the caller shows the qube
+
+qubes.GetAppMenuTemplates * @anyvm dom0 allow

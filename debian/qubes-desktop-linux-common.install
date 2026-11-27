@@ -9,3 +9,5 @@ usr/lib/python3/dist-packages/qubesappmenusext/*
 etc/qubes-rpc/qubes.SyncAppMenus
 etc/qubes-rpc/qubes.UpdateAppMenusFor
 etc/qubes-rpc/qubes.RemoveAppMenusFor
+etc/qubes-rpc/qubes.GetAppMenuTemplates
+etc/qubes/policy.d/90-default-appmenus.policy

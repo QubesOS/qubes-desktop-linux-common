@@ -1,0 +1,15 @@
+#!/bin/sh
+
+if [ -z "$1" ]; then
+    echo "Missing argument (VM name)" >&2
+    exit 2
+fi
+
+if [ $(id -u) -eq 0 ]; then
+    user=$(getent group qubes|cut -d: -f4|cut -d, -f1)
+    if [ -n "$user" ]; then
+        exec /usr/sbin/runuser -u "$user" -- /usr/bin/qvm-appmenus --export-templates -- "$1"
+    fi
+else
+    exec /usr/bin/qvm-appmenus --export-templates -- "$1"
+fi

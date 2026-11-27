@@ -24,6 +24,8 @@ install:
 	install -m 0755 qubesappmenus/qubes.SyncAppMenus $(DESTDIR)/etc/qubes-rpc/
 	install -m 0755 qubesappmenus/qubes.UpdateAppMenusFor $(DESTDIR)/etc/qubes-rpc/
 	install -m 0755 qubesappmenus/qubes.RemoveAppMenusFor $(DESTDIR)/etc/qubes-rpc/
+	install -m 0755 qubesappmenus/qubes.GetAppMenuTemplates $(DESTDIR)/etc/qubes-rpc/
+	install -D -m 0644 qubesappmenus/90-default-appmenus.policy $(DESTDIR)/etc/qubes/policy.d/90-default-appmenus.policy
 
 	$(MAKE) -C qubes-menus install
 

@@ -22,6 +22,9 @@ import subprocess
 import grp
 import logging
 import asyncio
+import os
+import pwd
+import shutil
 from collections import defaultdict
 
 import qubes.ext
@@ -42,19 +45,72 @@ class AppmenusExtension(qubes.ext.Extension):
         :param command: list for subprocess.Popen
         :return: None
         """
-        try:
-            qubes_group = grp.getgrnam('qubes')
-            user = qubes_group.gr_mem[0]
-        except KeyError as e:
-            self.log.warning('Default user not found: ' + str(e))
+        user, _ = self.default_user()
+        if user is None:
+            self.log.warning('Default user not found')
             return
 
         proc = await asyncio.create_subprocess_exec(
-            'runuser', '-u', user, '--', 'env', 'DISPLAY=:0',
+            'runuser', '-u', user.pw_name, '--', 'env', 'DISPLAY=:0',
             *command)
         await proc.wait()
         if proc.returncode != 0:
             self.log.warning('Command \'%s\' failed', ' '.join(command))
+
+    @staticmethod
+    def default_user():
+        """
+        Default normal user and the qubes group, None if not found
+        """
+        try:
+            qubes_group = grp.getgrnam('qubes')
+            return pwd.getpwnam(qubes_group.gr_mem[0]), qubes_group
+        except (KeyError, IndexError):
+            return None, None
+
+    def prepare_store(self, vm):
+        """
+        Let appmenus tools keep menu templates in the directory of vm
+        """
+        dir_path = getattr(vm, 'dir_path', None)
+        if not dir_path or not os.path.isdir(dir_path):
+            return
+        user, qubes_group = self.default_user()
+        if user is None:
+            return
+        old_dir = os.path.join(user.pw_dir, '.local', 'share',
+            'qubes-appmenus', vm.name)
+        for subdir in ('apps.templates', 'apps.tempicons'):
+            path = os.path.join(dir_path, subdir)
+            try:
+                if not os.path.isdir(path):
+                    os.mkdir(path)
+                    self.migrate_templates(os.path.join(old_dir, subdir),
+                        path, user.pw_uid, qubes_group.gr_gid)
+                os.chown(path, -1, qubes_group.gr_gid)
+                os.chmod(path, 0o2775)
+            except OSError as e:
+                self.log.warning("Failed to prepare '%s': %s", path, e)
+
+    @staticmethod
+    def migrate_templates(old_dir, new_dir, uid, gid):
+        """
+        Copy menu templates kept in the user's home before
+        """
+        if not os.path.isdir(old_dir):
+            return
+        for name in os.listdir(old_dir):
+            old_path = os.path.join(old_dir, name)
+            if os.path.islink(old_path) or not os.path.isfile(old_path):
+                continue
+            new_path = os.path.join(new_dir, name)
+            shutil.copyfile(old_path, new_path)
+            os.chown(new_path, uid, gid)
+            os.chmod(new_path, 0o664)
+
+    @qubes.ext.handler('domain-load')
+    def on_domain_load(self, vm, event):
+        self.prepare_store(vm)
 
     async def update_appmenus(self, vm):
         guivm = vm.guivm
@@ -111,10 +167,25 @@ class AppmenusExtension(qubes.ext.Extension):
 
     @qubes.ext.handler('domain-create-on-disk')
     async def create_on_disk(self, vm, event):
+        self.prepare_store(vm)
+        template = getattr(vm, 'template', None)
+        if template is not None and 'menu-items' not in vm.features \
+                and 'default-menu-items' in template.features:
+            # A GUI VM may not read the template
+            vm.features['menu-items'] = \
+                template.features['default-menu-items']
         await self.update_appmenus(vm)
 
     @qubes.ext.handler('domain-clone-files')
     async def clone_disk_files(self, vm, event, src):
+        self.prepare_store(vm)
+        guivm = getattr(vm, 'guivm', None)
+        if guivm and guivm.klass != 'AdminVM':
+            await self.run_as_user(
+                ['qvm-appmenus', '--quiet', '--init', '--source=' + src.name,
+                vm.name])
+            await self.update_appmenus(vm)
+            return
         await self.run_as_user(
             ['qvm-appmenus', '--quiet', '--init', '--create', '--source=' + src.name,
             vm.name])
@@ -240,25 +311,42 @@ class AppmenusExtension(qubes.ext.Extension):
             self.vm_tasks[vm.name].append(
                 asyncio.ensure_future(self.remove_appmenus(vm.name, vm.guivm)))
 
+    async def update_pending(self, vm):
+        """
+        Update menus queued for GUI VM vm
+        """
+        pending_update = vm.features.get('menu-update-pending-for', '').split()
+        if not pending_update:
+            return
+        # please no async code between those two calls
+        del vm.features['menu-update-pending-for']
+        vm.log.info("Processing pending menu updates")
+        for to_update in pending_update:
+            if to_update not in vm.app.domains:
+                # removed in the meantime, and should be handled
+                # by pending removals
+                continue
+            await self.update_appmenus(vm.app.domains[to_update])
+
+    @qubes.ext.handler('domain-feature-set:menu-update-pending-for')
+    def on_feature_set_menu_update_pending(self, vm, event, feature,
+            value, oldvalue=None):
+        if vm.app.vmm.offline_mode or not vm.is_running():
+            return
+        self.collect_done_tasks(vm)
+        self.vm_tasks[vm.name].append(
+            asyncio.ensure_future(self.update_pending(vm)))
+
     @qubes.ext.handler('domain-start')
     async def on_domain_start(self, vm, event, **kwargs):
         """Process queued menu updates"""
         pending_remove = vm.features.get('menu-remove-pending-for', '').split()
-        pending_update = vm.features.get('menu-update-pending-for', '').split()
         if pending_remove:
             vm.log.info("Processing pending menu removals")
             for to_remove in pending_remove:
                 await self.remove_appmenus(to_remove, guivm=vm)
             del vm.features['menu-remove-pending-for']
-        if pending_update:
-            vm.log.info("Processing pending menu updates")
-            for to_update in pending_update:
-                if to_update not in vm.app.domains:
-                    # removed in the meantime, and should be handled
-                    # by the loop above
-                    continue
-                await self.update_appmenus(vm.app.domains[to_update])
-            del vm.features['menu-update-pending-for']
+        await self.update_pending(vm)
 
     @qubes.ext.handler('domain-shutdown')
     async def on_domain_shutdown(self, vm, event, **kwargs):

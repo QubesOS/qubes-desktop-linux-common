@@ -22,8 +22,8 @@ BuildRequires: desktop-file-utils >= %{desktop_file_utils_version}
 Requires:	xdotool
 Requires:	xprop
 Requires:	python%{python3_pkgversion}-qubesimgconverter
-# for --force-root support
-Requires:	python%{python3_pkgversion}-qubesadmin >= 4.1.14
+# for defaults of refused feature reads
+Requires:	python%{python3_pkgversion}-qubesadmin >= 4.4.3
 Requires:	python%{python3_pkgversion}-pyxdg
 Requires:	xdg-utils
 
@@ -71,6 +71,16 @@ make -C doc DESTDIR=$RPM_BUILD_ROOT MANDIR=%{_mandir} PYTHON=%{__python3} instal
 make -C wayland-config DESTDIR=$RPM_BUILD_ROOT install
 
 %post
+if [ "$1" -gt 1 ] ; then
+    # Remove icons no longer shipped
+    for i in dom0-update-avail netvm template ; do
+        xdg-icon-resource uninstall --noupdate --size 48 $i
+    done
+    for i in black blue gray green orange purple red yellow ; do
+        xdg-icon-resource uninstall --noupdate --size 48 $i
+        xdg-icon-resource uninstall --noupdate --size 48 dispvm-$i
+    done
+fi
 for i in /usr/share/qubes/icons/*.png ; do
     xdg-icon-resource install --noupdate --novendor --size 48 $i
 done
@@ -119,6 +129,8 @@ fi
 /etc/qubes-rpc/qubes.SyncAppMenus
 /etc/qubes-rpc/qubes.UpdateAppMenusFor
 /etc/qubes-rpc/qubes.RemoveAppMenusFor
+/etc/qubes-rpc/qubes.GetAppMenuTemplates
+%config(noreplace) /etc/qubes/policy.d/90-default-appmenus.policy
 /usr/share/qubes/icons/*.png
 /usr/share/icons/hicolor/scalable/apps/qubes-vm-settings.svg
 /usr/bin/qvm-sync-appmenus
